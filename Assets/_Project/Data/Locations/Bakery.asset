@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f32a718e501bb7046b90def7799c937f, type: 3}
+  m_Name: Bakery
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Locations.LocationDefinition
+  _id: bakery
+  _displayName: Bakery
+  _district: Old Town Market
+  _sceneName: Location_Bakery
+  _mechanicFamilies: 00000000i
+  _items:
+  - {fileID: 11400000, guid: a08ddfdb46ad909428708d7f0b0b027d, type: 2}
+  - {fileID: 11400000, guid: 5976a640d2eddcb4aa600c4a9e400371, type: 2}
+  - {fileID: 11400000, guid: c63c145062d87f14aa0daf605a1bdba5, type: 2}
+  - {fileID: 11400000, guid: c23b86a7f4c02f444914397bdc5802e7, type: 2}
+  - {fileID: 11400000, guid: e2a8113ee48406940ad2762187dd8f65, type: 2}
+  - {fileID: 11400000, guid: 4cf9fb92553ea894c9b780e36a0ff9d5, type: 2}
+  - {fileID: 11400000, guid: 290df6e7cfaeec14db578f67eec980ef, type: 2}
+  - {fileID: 11400000, guid: 14960859debe5864d92f737d845740dc, type: 2}
+  - {fileID: 11400000, guid: e7a17461825e3c6418637cdfb627041a, type: 2}
+  - {fileID: 11400000, guid: 5d6c7c3f92b6b5f49919e398e09b5e7b, type: 2}
+  - {fileID: 11400000, guid: 7859e9b79e1e12c47a6b01ff130b42d6, type: 2}
+  - {fileID: 11400000, guid: 3a92cbbf57f374c4b9f9ea875965490c, type: 2}
+  - {fileID: 11400000, guid: 13e025038b6b3e644a2f95a49ecfba1c, type: 2}
+  - {fileID: 11400000, guid: e76b880b6ece6b2499ceb707c2a18f79, type: 2}
+  - {fileID: 11400000, guid: b86f6013afc54ae4b8043facddab5b79, type: 2}
+  - {fileID: 11400000, guid: 14747baa06913ba48874f9386e3ee264, type: 2}
+  - {fileID: 11400000, guid: 81f28ea8618957c49af5deb7d32cfdc5, type: 2}
+  - {fileID: 11400000, guid: 8cd445dfb8b25b34cbeaf5d70370124a, type: 2}
+  - {fileID: 11400000, guid: ef9afce03971da64c931c1140fbb05f5, type: 2}
+  - {fileID: 11400000, guid: c84884d65fda1b54ba40b56735b00345, type: 2}
+  - {fileID: 11400000, guid: 68a4c3734de4df944878f23f4ce3c819, type: 2}
+  - {fileID: 11400000, guid: 00ec9c8446f712e42896a68af7ae14ec, type: 2}
+  - {fileID: 11400000, guid: 605f251d54ffc47488c75b89c4a3783e, type: 2}
+  - {fileID: 11400000, guid: 55b7482e8efcba149957411173b1f856, type: 2}
+  - {fileID: 11400000, guid: ce526a0480ed7d641ba69421dbbc91fc, type: 2}
+  - {fileID: 11400000, guid: e9f8aba4092b88e42931d4e8e0e3273d, type: 2}
+  _memory: {fileID: 11400000, guid: 389be551a6b46064cace541897d6c564, type: 2}
+  _totalSlots: 3998
+  _muddleSeed: 1234
+  _muddleFraction: 1

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e54ef0d220210343bd1afb93b700b74, type: 3}
+  m_Name: FantasyShop_Memory
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Story.MemoryDefinition
+  _id: memory_fantasy_shop
+  _title: The Day Before
+  _locationName: Zephyrine's Curiosities, Magic Quarter
+  _lines:
+  - Speaker: 
+    Text: Midnight in the Magic Quarter. The candles in the window burn green, then gold, then green again.
+    Duration: 5
+  - Speaker: Madame Zephyrine
+    Text: Potions on top, crystals in the middle, candles below. Everything in here likes to wander, so everything needs a home.
+    Duration: 6.5
+  - Speaker: 
+    Text: 'The crystal ball on the counter clouded over. In the mist she saw a street she had never walked: a thirteenth lane, tucked behind the clock on the square.'
+    Duration: 7
+  - Speaker: Madame Zephyrine
+    Text: "Something small is knocking on the city's door from that side. It sounds\u2026 lonely."
+    Duration: 5.5
+  - Speaker: 
+    Text: She left a sugared bun on the doorstep, just in case, and went up to bed.
+    Duration: 5
+  - Speaker: 
+    Text: By morning the bun was gone, a trail of crumbs led toward the square, and every shelf in the city had spilled its secrets.
+    Duration: 6
+  _clue: The crystal ball showed a thirteenth lane behind the clock on the square, and something small and lonely knocking from the other side.

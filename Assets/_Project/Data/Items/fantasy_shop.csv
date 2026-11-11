@@ -1,0 +1,73 @@
+id,displayName,homeLocationId,slotTypes,mechanicFamily,rarity,isStray,prefab,sortKey,greyboxShape,greyboxSize,greyboxColor,living,disguiseName
+# Potions (two of them are skittish and hop away)
+potion_bouncy,Bouncy Potion,fantasy_shop,potion,I,Uncommon,false,,,bottle,0.08;0.18;0.08,#E0457B,hop,
+potion_giggling,Giggling Potion,fantasy_shop,potion,I,Uncommon,false,,,bottle,0.08;0.18;0.08,#F2A541,hop,
+potion_moonlight,Moonlight Tonic,fantasy_shop,potion,A,Common,false,,,bottle,0.08;0.18;0.08,#6C8EF5,,
+potion_mint,Fizzy Mint Elixir,fantasy_shop,potion,A,Common,false,,,bottle,0.08;0.18;0.08,#4CC9A6,,
+# Crystals (two are shy: only a shimmer until you come close)
+crystal_amethyst,Shy Amethyst,fantasy_shop,crystal,I,Uncommon,false,,,crystal,0.12;0.16;0.12,#9B5DE5,shy,
+crystal_quartz,Bashful Quartz,fantasy_shop,crystal,I,Uncommon,false,,,crystal,0.12;0.16;0.12,#CDE7F5,shy,
+crystal_ruby,Ember Ruby,fantasy_shop,crystal,A,Common,false,,,crystal,0.12;0.16;0.12,#D7263D,,
+crystal_agate,Moss Agate,fantasy_shop,crystal,A,Common,false,,,crystal,0.12;0.16;0.12,#3E8E41,,
+# Candles (two float around the shop)
+candle_floating,Floating Candle,fantasy_shop,candle,I,Uncommon,false,,,candle,0.06;0.2;0.06,#FFF3D6,float,
+candle_taper,Drifting Taper,fantasy_shop,candle,I,Uncommon,false,,,candle,0.05;0.24;0.05,#F9E2AE,float,
+candle_lavender,Lavender Candle,fantasy_shop,candle,A,Common,false,,,candle,0.07;0.16;0.07,#B8A1D9,,
+candle_honey,Honey Candle,fantasy_shop,candle,A,Common,false,,,candle,0.07;0.16;0.07,#F4C95D,,
+# Wands (one is skittish)
+wand_wriggly,Wriggly Wand,fantasy_shop,wand,I,Uncommon,false,,,wand,0.34;0.025;0.025,#8B5A2B,hop,
+wand_willow,Willow Wand,fantasy_shop,wand,A,Common,false,,,wand,0.34;0.025;0.025,#A47148,,
+wand_starlight,Starlight Wand,fantasy_shop,wand,A,Common,false,,,wand,0.34;0.025;0.025,#E9D8A6,,
+wand_ash,Ash Wand,fantasy_shop,wand,A,Common,false,,,wand,0.34;0.025;0.025,#6F4E37,,
+# Curiosities (two are disguised, one floats)
+curio_dragon_egg,Dragon Egg,fantasy_shop,curiosity,I,Rare,false,,,egg,0.16;0.2;0.16,#E76F51,disguise,Ordinary Pebble
+curio_spellbook,Sleepy Spellbook,fantasy_shop,curiosity,I,Rare,false,,,book_flat,0.2;0.06;0.15,#5E548E,disguise,Old Doorstop
+curio_teacup,Enchanted Teacup,fantasy_shop,curiosity,I,Uncommon,false,,,cup,0.1;0.08;0.1,#F7B2BD,float,
+curio_snowglobe,Starry Snow Globe,fantasy_shop,curiosity,A,Common,false,,,globe,0.15;0.15;0.15,#A8DADC,,
+# ── Fantasy shop at scale (step 4c): each kind has its own slot type; none of these are living ──
+# Potions (tall potion walls)
+potion_rose,Rose Elixir,fantasy_shop,potion_rose,A,Common,false,,,bottle,0.07;0.16;0.07,#E86A92,,
+potion_sleep,Sleepy Draught,fantasy_shop,potion_sleep,A,Common,false,,,bottle,0.07;0.16;0.07,#6C5B9E,,
+potion_sun,Sunshine Tonic,fantasy_shop,potion_sun,A,Common,false,,,bottle,0.07;0.16;0.07,#F6C445,,
+potion_sea,Sea-Salt Brew,fantasy_shop,potion_sea,A,Common,false,,,bottle,0.07;0.16;0.07,#3FA7B5,,
+potion_ember,Ember Draught,fantasy_shop,potion_ember,A,Common,false,,,bottle,0.07;0.16;0.07,#D9482B,,
+potion_frost,Frost Tonic,fantasy_shop,potion_frost,A,Common,false,,,bottle,0.07;0.16;0.07,#A8DADC,,
+potion_moss,Moss Mixture,fantasy_shop,potion_moss,A,Common,false,,,bottle,0.07;0.16;0.07,#6A8D3A,,
+potion_star,Starlight Syrup,fantasy_shop,potion_star,A,Common,false,,,bottle,0.07;0.16;0.07,#2B2D6E,,
+# Crystals (glass crystal cabinets)
+crystal_rosequartz,Rose Quartz,fantasy_shop,crystal_rosequartz,A,Common,false,,,crystal,0.08;0.11;0.08,#F4B6C2,,
+crystal_citrine,Citrine,fantasy_shop,crystal_citrine,A,Common,false,,,crystal,0.08;0.11;0.08,#F2C14E,,
+crystal_sapphire,Sapphire,fantasy_shop,crystal_sapphire,A,Common,false,,,crystal,0.08;0.11;0.08,#2E5EAA,,
+crystal_emerald,Emerald,fantasy_shop,crystal_emerald,A,Common,false,,,crystal,0.08;0.11;0.08,#2E8B57,,
+crystal_onyx,Onyx,fantasy_shop,crystal_onyx,A,Common,false,,,crystal,0.08;0.11;0.08,#2B2B2B,,
+crystal_opal,Opal,fantasy_shop,crystal_opal,A,Common,false,,,crystal,0.08;0.11;0.08,#DDE8F0,,
+# Candles (candle racks)
+candle_beeswax,Beeswax Candle,fantasy_shop,candle_beeswax,A,Common,false,,,candle,0.05;0.14;0.05,#F4D58D,,
+candle_rose,Rose Candle,fantasy_shop,candle_rose,A,Common,false,,,candle,0.05;0.14;0.05,#E8A0B4,,
+candle_sage,Sage Candle,fantasy_shop,candle_sage,A,Common,false,,,candle,0.05;0.14;0.05,#9CB380,,
+candle_midnight,Midnight Candle,fantasy_shop,candle_midnight,A,Common,false,,,candle,0.05;0.14;0.05,#2C3E73,,
+# Wands (wand cases)
+wand_oak,Oak Wand,fantasy_shop,wand_oak,A,Common,false,,,wand,0.3;0.022;0.022,#8B5A2B,,
+wand_birch,Birch Wand,fantasy_shop,wand_birch,A,Common,false,,,wand,0.3;0.022;0.022,#E9DCC9,,
+wand_ebony,Ebony Wand,fantasy_shop,wand_ebony,A,Common,false,,,wand,0.3;0.022;0.022,#2B1D14,,
+wand_holly,Holly Wand,fantasy_shop,wand_holly,A,Common,false,,,wand,0.3;0.022;0.022,#4F7942,,
+# Spellbooks (spellbook case)
+spellbook_fire,Spellbook of Fire,fantasy_shop,spellbook_fire,A,Common,false,,,book_lite,0.05;0.26;0.19,#B5322A,,
+spellbook_growth,Spellbook of Growth,fantasy_shop,spellbook_growth,A,Common,false,,,book_lite,0.05;0.26;0.19,#3E7D3A,,
+spellbook_tides,Spellbook of Tides,fantasy_shop,spellbook_tides,A,Common,false,,,book_lite,0.05;0.26;0.19,#2D5D9F,,
+spellbook_dreams,Spellbook of Dreams,fantasy_shop,spellbook_dreams,A,Common,false,,,book_lite,0.05;0.26;0.19,#6A3E8E,,
+# Herb jars (herb shelf)
+herb_lavender,Dried Lavender,fantasy_shop,herb_lavender,A,Common,false,,,jar,0.07;0.09;0.07,#9C88C9,,
+herb_pepper,Dragon Pepper,fantasy_shop,herb_pepper,A,Common,false,,,jar,0.07;0.09;0.07,#C2412D,,
+herb_moonflower,Moonflower Petals,fantasy_shop,herb_moonflower,A,Common,false,,,jar,0.07;0.09;0.07,#E8E4F2,,
+herb_toadstool,Toadstool Caps,fantasy_shop,herb_toadstool,A,Common,false,,,jar,0.07;0.09;0.07,#B55D3B,,
+# Curios for the round stands
+globe_snow,Snowy Globe,fantasy_shop,stand_globe,A,Common,false,,,globe,0.13;0.13;0.13,#CFE8F0,,
+globe_aurora,Aurora Globe,fantasy_shop,stand_globe,A,Common,false,,,globe,0.13;0.13;0.13,#9FE2BF,,
+cup_plain,Painted Teacup,fantasy_shop,stand_cup,A,Common,false,,,cup,0.09;0.07;0.09,#F7B2BD,,
+cup_gilded,Gilded Teacup,fantasy_shop,stand_cup,A,Common,false,,,cup,0.09;0.07;0.09,#E9C46A,,
+rune_moon,Moon Rune Stone,fantasy_shop,stand_rune,A,Common,false,,,egg,0.08;0.06;0.08,#8D99AE,,
+rune_sun,Sun Rune Stone,fantasy_shop,stand_rune,A,Common,false,,,egg,0.08;0.06;0.08,#C9A66B,,
+# Scrolls (scroll crates)
+scroll_plain,Rolled Scroll,fantasy_shop,scroll,A,Common,false,,,baguette,0.25;0.05;0.05,#EFE3C8,,
+scroll_sealed,Sealed Scroll,fantasy_shop,scroll_sealed,A,Common,false,,,baguette,0.25;0.05;0.05,#D9C49A,,

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b66492965bc0dd41aba6f72788a9f4b, type: 3}
+  m_Name: novel_hearth
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Items.ItemDefinition
+  _id: novel_hearth
+  _displayName: "Hearth \u2014 Kettle Weather"
+  _prefab: {fileID: 7494655421480065620, guid: 251d87bdd7dd85444bf982a400a9b7ee, type: 3}
+  _homeLocationId: library
+  _slotTypes:
+  - novel
+  _mechanicFamily: 1
+  _rarity: 0
+  _isStray: 0
+  _sortKey: Hearth
+  _living: 0
+  _disguiseName: 

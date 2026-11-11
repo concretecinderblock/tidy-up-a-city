@@ -1,0 +1,35 @@
+id,displayName,homeLocationId,slotTypes,mechanicFamily,rarity,isStray,prefab,sortKey,greyboxShape,greyboxSize,greyboxColor
+# Loaves (tall wall shelves, one wall per kind)
+bread_loaf,Sourdough Loaf,bakery,loaf_sourdough,A,Common,false,,,loaf,0.28;0.15;0.18,#8C5C2E
+bread_rye,Rye Loaf,bakery,loaf_rye,A,Common,false,,,loaf,0.26;0.14;0.17,#5E3B22
+bread_seeded,Seeded Loaf,bakery,loaf_seeded,A,Common,false,,,loaf,0.27;0.15;0.17,#A57442
+bread_brioche,Brioche,bakery,loaf_brioche,A,Common,false,,,loaf,0.24;0.15;0.14,#E3A13B
+# Long breads (open racks)
+bread_baguette,Baguette,bakery,long_baguette,A,Common,false,,,baguette,0.44;0.09;0.09,#DBA85C
+bread_baton,Rustic Baton,bakery,long_baton,A,Common,false,,,baguette,0.4;0.1;0.1,#B9813F
+# Rolls (deep roll racks)
+roll_white,Soft Roll,bakery,roll_white,A,Common,false,,,bun,0.1;0.07;0.1,#EBC07A
+roll_bun,Sweet Bun,bakery,roll_bun,A,Common,false,,,bun,0.11;0.08;0.11,#C9822F
+roll_bagel,Bagel,bakery,roll_bagel,A,Common,false,,,bagel,0.11;0.045;0.11,#D9A35F
+# Pastries (glass cases)
+bread_croissant,Croissant,bakery,pastry_croissant,A,Common,false,,,croissant,0.2;0.08;0.13,#F7C761
+pastry_chocolat,Pain au Chocolat,bakery,pastry_chocolat,A,Common,false,,,cube,0.15;0.06;0.09,#D99A45
+pastry_danish,Apricot Danish,bakery,pastry_danish,A,Common,false,,,cookie,0.13;0.04;0.13,#E8B55A
+pastry_swirl,Cinnamon Swirl,bakery,pastry_swirl,A,Common,false,,,bagel,0.12;0.05;0.12,#B5733A
+# Little cakes (glass cases)
+cake_muffin,Blueberry Muffin,bakery,small_muffin,A,Common,false,,,muffin,0.09;0.1;0.09,#A9744B
+cake_cupcake,Strawberry Cupcake,bakery,small_cupcake,A,Common,false,,,cupcake,0.08;0.11;0.08,#F4A6C0
+cake_donut,Pink Donut,bakery,small_donut,A,Common,false,,,donut,0.1;0.045;0.1,#F28DB2
+cake_macaron,Pistachio Macaron,bakery,small_macaron,A,Common,false,,,macaron,0.05;0.04;0.05,#A8D5A2
+# Cookies (low cookie counter)
+cookie_choc,Chocolate Chip Cookie,bakery,cookie_choc,A,Common,false,,,cookie,0.08;0.015;0.08,#C9935A
+cookie_ginger,Gingerbread Cookie,bakery,cookie_ginger,A,Common,false,,,cookie,0.08;0.015;0.08,#9C5B2E
+cookie_shortbread,Shortbread,bakery,cookie_shortbread,A,Common,false,,,cube,0.08;0.02;0.05,#F0D9A0
+# Whole cakes and pies (tiered cake stands)
+cake_lemon,Lemon Cake,bakery,big_cake,A,Uncommon,false,,,cake,0.22;0.14;0.22,#F5DE7A
+cake_pie,Apple Pie,bakery,big_pie,A,Uncommon,false,,,pie,0.22;0.07;0.22,#D9A35F
+# Pantry (jar shelf, sack racks)
+jar_jam,Strawberry Jam,bakery,jar_jam,A,Common,false,,,jar,0.07;0.09;0.07,#C0283A
+jar_honey,Honey,bakery,jar_honey,A,Common,false,,,jar,0.07;0.09;0.07,#E8A317
+sack_flour,Flour Sack,bakery,sack_flour,A,Common,false,,,sack,0.3;0.36;0.22,#EFE6D2
+sack_sugar,Sugar Sack,bakery,sack_sugar,A,Common,false,,,sack,0.26;0.3;0.2,#D9C9A8

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b66492965bc0dd41aba6f72788a9f4b, type: 3}
+  m_Name: crystal_rosequartz
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Items.ItemDefinition
+  _id: crystal_rosequartz
+  _displayName: Rose Quartz
+  _prefab: {fileID: 7580018626995916724, guid: c03fdc24b6b7e3447b95bfd4697265f4, type: 3}
+  _homeLocationId: fantasy_shop
+  _slotTypes:
+  - crystal_rosequartz
+  _mechanicFamily: 0
+  _rarity: 0
+  _isStray: 0
+  _sortKey: 
+  _living: 0
+  _disguiseName: 

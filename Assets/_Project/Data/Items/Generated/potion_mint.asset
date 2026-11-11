@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b66492965bc0dd41aba6f72788a9f4b, type: 3}
+  m_Name: potion_mint
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Items.ItemDefinition
+  _id: potion_mint
+  _displayName: Fizzy Mint Elixir
+  _prefab: {fileID: 4138038272971715795, guid: 24da1e126b4c84b438bf178bcce1dee4, type: 3}
+  _homeLocationId: fantasy_shop
+  _slotTypes:
+  - potion
+  _mechanicFamily: 0
+  _rarity: 0
+  _isStray: 0
+  _sortKey: 
+  _living: 0
+  _disguiseName: 

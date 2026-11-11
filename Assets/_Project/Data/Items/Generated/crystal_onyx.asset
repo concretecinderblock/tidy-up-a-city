@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b66492965bc0dd41aba6f72788a9f4b, type: 3}
+  m_Name: crystal_onyx
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Items.ItemDefinition
+  _id: crystal_onyx
+  _displayName: Onyx
+  _prefab: {fileID: 3734298557734218567, guid: 17ecc6b6be4e7cc4890f1bb022bc8300, type: 3}
+  _homeLocationId: fantasy_shop
+  _slotTypes:
+  - crystal_onyx
+  _mechanicFamily: 0
+  _rarity: 0
+  _isStray: 0
+  _sortKey: 
+  _living: 0
+  _disguiseName: 

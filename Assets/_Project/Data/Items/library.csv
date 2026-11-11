@@ -1,0 +1,114 @@
+id,displayName,homeLocationId,slotTypes,mechanicFamily,rarity,isStray,prefab,sortKey,greyboxShape,greyboxSize,greyboxColor
+# Novels: ordered alphabetically by author surname (sortKey)
+novel_abernathy,Abernathy — The Lantern Keeper,library,novel,B,Common,false,,Abernathy,book,0.04;0.24;0.17,#8E3B46
+novel_bellweather,Bellweather — Rain on Copper Roofs,library,novel,B,Common,false,,Bellweather,book,0.035;0.22;0.16,#2E5E4E
+novel_crumb,Crumb — A Pocketful of Crumbs,library,novel,B,Common,false,,Crumb,book,0.048;0.26;0.17,#3B5B92
+novel_dunmore,Dunmore — The Clockmaker's Daughter,library,novel,B,Common,false,,Dunmore,book,0.042;0.24;0.17,#C9A227
+novel_everly,Everly — Letters from the Ferry,library,novel,B,Common,false,,Everly,book,0.035;0.22;0.16,#6B4E71
+novel_finch,"Finch — Small Birds, Big Sky",library,novel,B,Common,false,,Finch,book,0.04;0.26;0.17,#B5651D
+novel_gallowglass,Gallowglass — The Last Tram Home,library,novel,B,Common,false,,Gallowglass,book,0.048;0.24;0.17,#8E3B46
+novel_hearth,Hearth — Kettle Weather,library,novel,B,Common,false,,Hearth,book,0.035;0.22;0.16,#2E5E4E
+novel_ivory,Ivory — The Piano in the Attic,library,novel,B,Common,false,,Ivory,book,0.042;0.26;0.17,#3B5B92
+novel_juniper,Juniper — Notes from the Greenhouse,library,novel,B,Common,false,,Juniper,book,0.04;0.24;0.17,#C9A227
+novel_kettle,Kettle — Tea for Thirteen,library,novel,B,Common,false,,Kettle,book,0.035;0.22;0.16,#6B4E71
+novel_larkspur,Larkspur — The Summer Allotment,library,novel,B,Common,false,,Larkspur,book,0.048;0.26;0.17,#B5651D
+novel_moss,Moss — Stone Steps,library,novel,B,Common,false,,Moss,book,0.04;0.24;0.17,#8E3B46
+novel_nightingale,Nightingale — Songs After Midnight,library,novel,B,Common,false,,Nightingale,book,0.042;0.22;0.16,#2E5E4E
+novel_oakhart,Oakhart — The Woodcarver's Year,library,novel,B,Common,false,,Oakhart,book,0.035;0.26;0.17,#3B5B92
+novel_pennywhistle,Pennywhistle — The Busker's Almanac,library,novel,B,Common,false,,Pennywhistle,book,0.048;0.24;0.17,#C9A227
+novel_quill,Quill — Ink and Ivy,library,novel,B,Common,false,,Quill,book,0.035;0.22;0.16,#6B4E71
+novel_rookwood,Rookwood — The Chimney Sweep's Map,library,novel,B,Common,false,,Rookwood,book,0.042;0.26;0.17,#B5651D
+novel_sparrow,Sparrow — Crumbs on the Windowsill,library,novel,B,Common,false,,Sparrow,book,0.04;0.24;0.17,#8E3B46
+novel_thistle,Thistle — The Garden That Wandered,library,novel,B,Common,false,,Thistle,book,0.035;0.22;0.16,#2E5E4E
+# City Atlas: ordered by volume number (one volume per district)
+atlas_01,"City Atlas, Vol. 1 — Old Town Market",library,atlas,B,Common,false,,1,book,0.045;0.3;0.18,#1F3A5F
+atlas_02,"City Atlas, Vol. 2 — High Street",library,atlas,B,Common,false,,2,book,0.045;0.3;0.18,#1F3A5F
+atlas_03,"City Atlas, Vol. 3 — The Mall",library,atlas,B,Common,false,,3,book,0.045;0.3;0.18,#1F3A5F
+atlas_04,"City Atlas, Vol. 4 — Culture Quarter",library,atlas,B,Common,false,,4,book,0.045;0.3;0.18,#1F3A5F
+atlas_05,"City Atlas, Vol. 5 — Residential",library,atlas,B,Common,false,,5,book,0.045;0.3;0.18,#1F3A5F
+atlas_06,"City Atlas, Vol. 6 — Food & Nightlife",library,atlas,B,Common,false,,6,book,0.045;0.3;0.18,#1F3A5F
+atlas_07,"City Atlas, Vol. 7 — Civic Centre",library,atlas,B,Common,false,,7,book,0.045;0.3;0.18,#1F3A5F
+atlas_08,"City Atlas, Vol. 8 — Harbour & Industry",library,atlas,B,Common,false,,8,book,0.045;0.3;0.18,#1F3A5F
+atlas_09,"City Atlas, Vol. 9 — Magic Quarter",library,atlas,B,Common,false,,9,book,0.045;0.3;0.18,#1F3A5F
+atlas_10,"City Atlas, Vol. 10 — Parks & Outdoors",library,atlas,B,Common,false,,10,book,0.045;0.3;0.18,#1F3A5F
+# Picture books: ordered by size, tallest first (sortKey = height in cm)
+picture_giraffe,The Very Tall Giraffe,library,picture_book,B,Common,false,,38,book,0.03;0.38;0.18,#F3A712
+picture_lighthouse,Lighthouse Lullaby,library,picture_book,B,Common,false,,36,book,0.03;0.36;0.18,#29335C
+picture_kite,The Kite That Wouldn't Land,library,picture_book,B,Common,false,,34,book,0.03;0.34;0.18,#E4572E
+picture_umbrella,Grandpa's Big Umbrella,library,picture_book,B,Common,false,,32,book,0.03;0.32;0.18,#4CB944
+picture_teacups,Ten Teacups Tall,library,picture_book,B,Common,false,,30,book,0.03;0.3;0.18,#FF6B9A
+picture_moon,The Moon Bakes Bread,library,picture_book,B,Common,false,,28,book,0.03;0.28;0.18,#7B61FF
+picture_puddles,Puddle Jumpers,library,picture_book,B,Common,false,,26,book,0.03;0.26;0.18,#00A6A6
+picture_owl,Owl's Night Shift,library,picture_book,B,Common,false,,24,book,0.03;0.24;0.18,#3D9970
+picture_mouse,Mouse Moves House,library,picture_book,B,Common,false,,22,book,0.03;0.22;0.18,#EE6C4D
+picture_snail,The Tiny Snail's Long Walk,library,picture_book,B,Common,false,,20,book,0.03;0.2;0.18,#F2C14E
+# ── Library at scale (step 4b): kinds by section and author range; variants share a slot type ──
+# Novels (the stacks), by author surname range
+novel_ac_1,Novel · authors A–C,library,novel_ac,B,Common,false,,,book_lite,0.04;0.24;0.17,#8E3B46
+novel_ac_2,Novel · authors A–C,library,novel_ac,B,Common,false,,,book_lite,0.035;0.22;0.16,#A8505B
+novel_ac_3,Novel · authors A–C,library,novel_ac,B,Common,false,,,book_lite,0.046;0.26;0.17,#6F2C36
+novel_df_1,Novel · authors D–F,library,novel_df,B,Common,false,,,book_lite,0.04;0.24;0.17,#2E5E4E
+novel_df_2,Novel · authors D–F,library,novel_df,B,Common,false,,,book_lite,0.035;0.22;0.16,#3F7A66
+novel_df_3,Novel · authors D–F,library,novel_df,B,Common,false,,,book_lite,0.046;0.26;0.17,#224538
+novel_gi_1,Novel · authors G–I,library,novel_gi,B,Common,false,,,book_lite,0.04;0.24;0.17,#3B5B92
+novel_gi_2,Novel · authors G–I,library,novel_gi,B,Common,false,,,book_lite,0.035;0.22;0.16,#5174AD
+novel_gi_3,Novel · authors G–I,library,novel_gi,B,Common,false,,,book_lite,0.046;0.26;0.17,#2B4572
+novel_jl_1,Novel · authors J–L,library,novel_jl,B,Common,false,,,book_lite,0.04;0.24;0.17,#C9A227
+novel_jl_2,Novel · authors J–L,library,novel_jl,B,Common,false,,,book_lite,0.035;0.22;0.16,#DDB94A
+novel_jl_3,Novel · authors J–L,library,novel_jl,B,Common,false,,,book_lite,0.046;0.26;0.17,#A3821A
+novel_mo_1,Novel · authors M–O,library,novel_mo,B,Common,false,,,book_lite,0.04;0.24;0.17,#6B4E71
+novel_mo_2,Novel · authors M–O,library,novel_mo,B,Common,false,,,book_lite,0.035;0.22;0.16,#846590
+novel_mo_3,Novel · authors M–O,library,novel_mo,B,Common,false,,,book_lite,0.046;0.26;0.17,#523B57
+novel_pr_1,Novel · authors P–R,library,novel_pr,B,Common,false,,,book_lite,0.04;0.24;0.17,#B5651D
+novel_pr_2,Novel · authors P–R,library,novel_pr,B,Common,false,,,book_lite,0.035;0.22;0.16,#CB7D36
+novel_pr_3,Novel · authors P–R,library,novel_pr,B,Common,false,,,book_lite,0.046;0.26;0.17,#8F4F15
+novel_su_1,Novel · authors S–U,library,novel_su,B,Common,false,,,book_lite,0.04;0.24;0.17,#2F7F86
+novel_su_2,Novel · authors S–U,library,novel_su,B,Common,false,,,book_lite,0.035;0.22;0.16,#45999F
+novel_su_3,Novel · authors S–U,library,novel_su,B,Common,false,,,book_lite,0.046;0.26;0.17,#22646A
+novel_vz_1,Novel · authors V–Z,library,novel_vz,B,Common,false,,,book_lite,0.04;0.24;0.17,#7A8B3C
+novel_vz_2,Novel · authors V–Z,library,novel_vz,B,Common,false,,,book_lite,0.035;0.22;0.16,#93A452
+novel_vz_3,Novel · authors V–Z,library,novel_vz,B,Common,false,,,book_lite,0.046;0.26;0.17,#5F6D2D
+# Mysteries (the stacks)
+mystery_af_1,Mystery · authors A–F,library,mystery_af,B,Common,false,,,book_lite,0.038;0.21;0.15,#1E2A44
+mystery_af_2,Mystery · authors A–F,library,mystery_af,B,Common,false,,,book_lite,0.044;0.23;0.16,#2C3B5E
+mystery_gl_1,Mystery · authors G–L,library,mystery_gl,B,Common,false,,,book_lite,0.038;0.21;0.15,#2B2B30
+mystery_gl_2,Mystery · authors G–L,library,mystery_gl,B,Common,false,,,book_lite,0.044;0.23;0.16,#3E3E46
+mystery_mr_1,Mystery · authors M–R,library,mystery_mr,B,Common,false,,,book_lite,0.038;0.21;0.15,#4A1A20
+mystery_mr_2,Mystery · authors M–R,library,mystery_mr,B,Common,false,,,book_lite,0.044;0.23;0.16,#62252D
+mystery_sz_1,Mystery · authors S–Z,library,mystery_sz,B,Common,false,,,book_lite,0.038;0.21;0.15,#1F3528
+mystery_sz_2,Mystery · authors S–Z,library,mystery_sz,B,Common,false,,,book_lite,0.044;0.23;0.16,#2C4A38
+# Non-fiction and poetry (low wall shelves), by subject number
+nf_cookery_1,641 Cookery,library,nf_cookery,B,Common,false,,,book_lite,0.042;0.27;0.2,#E07A5F
+nf_cookery_2,641 Cookery,library,nf_cookery,B,Common,false,,,book_lite,0.05;0.25;0.19,#F2A07B
+nf_gardening_1,635 Gardening,library,nf_gardening,B,Common,false,,,book_lite,0.042;0.27;0.2,#81B29A
+nf_gardening_2,635 Gardening,library,nf_gardening,B,Common,false,,,book_lite,0.05;0.25;0.19,#5E9C7E
+nf_history_1,900 History,library,nf_history,B,Common,false,,,book_lite,0.042;0.27;0.2,#8D6E63
+nf_history_2,900 History,library,nf_history,B,Common,false,,,book_lite,0.05;0.25;0.19,#6D4C41
+nf_science_1,500 Science,library,nf_science,B,Common,false,,,book_lite,0.042;0.27;0.2,#3D5A80
+nf_science_2,500 Science,library,nf_science,B,Common,false,,,book_lite,0.05;0.25;0.19,#5679A6
+nf_travel_1,910 Travel,library,nf_travel,B,Common,false,,,book_lite,0.042;0.27;0.2,#F2CC8F
+nf_travel_2,910 Travel,library,nf_travel,B,Common,false,,,book_lite,0.05;0.25;0.19,#E0B36A
+nf_art_1,700 Art,library,nf_art,B,Common,false,,,book_lite,0.042;0.27;0.2,#D16BA5
+nf_art_2,700 Art,library,nf_art,B,Common,false,,,book_lite,0.05;0.25;0.19,#B0508A
+nf_music_1,780 Music,library,nf_music,B,Common,false,,,book_lite,0.042;0.27;0.2,#4A4E69
+nf_music_2,780 Music,library,nf_music,B,Common,false,,,book_lite,0.05;0.25;0.19,#62668A
+nf_nature_1,590 Nature,library,nf_nature,B,Common,false,,,book_lite,0.042;0.27;0.2,#6A994E
+nf_nature_2,590 Nature,library,nf_nature,B,Common,false,,,book_lite,0.05;0.25;0.19,#527A3B
+nf_poetry_am_1,821 Poetry A–M,library,nf_poetry_am,B,Common,false,,,book_lite,0.02;0.2;0.14,#E5989B
+nf_poetry_am_2,821 Poetry A–M,library,nf_poetry_am,B,Common,false,,,book_lite,0.025;0.21;0.14,#C97B7E
+nf_poetry_nz_1,821 Poetry N–Z,library,nf_poetry_nz,B,Common,false,,,book_lite,0.02;0.2;0.14,#B5838D
+nf_poetry_nz_2,821 Poetry N–Z,library,nf_poetry_nz,B,Common,false,,,book_lite,0.025;0.21;0.14,#9A6B75
+# Encyclopaedia (tall north shelves)
+enc_am_1,Encyclopaedia · A–M,library,enc_am,B,Common,false,,,book_lite,0.06;0.32;0.24,#5C2E2E
+enc_am_2,Encyclopaedia · A–M,library,enc_am,B,Common,false,,,book_lite,0.058;0.32;0.24,#7A3E3E
+enc_nz_1,Encyclopaedia · N–Z,library,enc_nz,B,Common,false,,,book_lite,0.06;0.32;0.24,#2E3F5C
+enc_nz_2,Encyclopaedia · N–Z,library,enc_nz,B,Common,false,,,book_lite,0.058;0.32;0.24,#3E557A
+# Children's corner (book bins), by size
+pic_small_1,Picture book · small,library,pic_small,B,Common,false,,,book_lite,0.03;0.22;0.22,#F4A261
+pic_small_2,Picture book · small,library,pic_small,B,Common,false,,,book_lite,0.03;0.22;0.22,#2A9D8F
+pic_medium_1,Picture book · medium,library,pic_medium,B,Common,false,,,book_lite,0.03;0.28;0.24,#E76F51
+pic_medium_2,Picture book · medium,library,pic_medium,B,Common,false,,,book_lite,0.03;0.28;0.24,#8AB17D
+pic_large_1,Picture book · large,library,pic_large,B,Common,false,,,book_lite,0.032;0.36;0.26,#264653
+pic_large_2,Picture book · large,library,pic_large,B,Common,false,,,book_lite,0.032;0.36;0.26,#E9C46A
+board_1,Board book,library,board_book,B,Common,false,,,book_lite,0.04;0.15;0.15,#FFB4A2
+board_2,Board book,library,board_book,B,Common,false,,,book_lite,0.04;0.15;0.15,#B5E48C

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b66492965bc0dd41aba6f72788a9f4b, type: 3}
+  m_Name: nf_cookery_2
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Items.ItemDefinition
+  _id: nf_cookery_2
+  _displayName: 641 Cookery
+  _prefab: {fileID: 8990386349600440945, guid: 7f8bb1dfbf6b624419e24805d8fa381f, type: 3}
+  _homeLocationId: library
+  _slotTypes:
+  - nf_cookery
+  _mechanicFamily: 1
+  _rarity: 0
+  _isStray: 0
+  _sortKey: 
+  _living: 0
+  _disguiseName: 

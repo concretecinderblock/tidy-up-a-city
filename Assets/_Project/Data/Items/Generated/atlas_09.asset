@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b66492965bc0dd41aba6f72788a9f4b, type: 3}
+  m_Name: atlas_09
+  m_EditorClassIdentifier: TidyUp.Runtime::TidyUp.Items.ItemDefinition
+  _id: atlas_09
+  _displayName: "City Atlas, Vol. 9 \u2014 Magic Quarter"
+  _prefab: {fileID: 9046522070068549204, guid: ace4258f90e9f8a4bbfe351f74bf1907, type: 3}
+  _homeLocationId: library
+  _slotTypes:
+  - atlas
+  _mechanicFamily: 1
+  _rarity: 0
+  _isStray: 0
+  _sortKey: 9
+  _living: 0
+  _disguiseName: 
