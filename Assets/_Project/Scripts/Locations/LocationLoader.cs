@@ -87,6 +87,13 @@ namespace TidyUp.Locations
             if (_streetRoot != null) _streetRoot.SetActive(false);
 
             LocationRuntime runtime = FindRuntime(handle.Result.Scene);
+            MegaLocation mega = runtime == null ? FindInScene<MegaLocation>(handle.Result.Scene) : null;
+            if (mega != null && mega.EntryPoint != null && GameServices.PlayerController != null)
+            {
+                // A mega location: stand at the entrance, then keep the screen faded until that room is in.
+                GameServices.PlayerController.Teleport(mega.EntryPoint.position, mega.EntryPoint.eulerAngles.y);
+                yield return mega.WaitUntilReady(mega.EntryPoint.position);
+            }
             if (runtime != null && runtime.EntryPoint != null && GameServices.PlayerController != null)
             {
                 GameServices.PlayerController.Teleport(runtime.EntryPoint.position, runtime.EntryPoint.eulerAngles.y);
@@ -103,12 +110,14 @@ namespace TidyUp.Locations
             SetBlocked(true);
 
             LocationRuntime runtime = GameServices.ActiveLocation;
-            int returned = runtime != null ? runtime.ReturnCarriedItems() : 0;
-            string name = runtime != null && runtime.Location != null ? runtime.Location.DisplayName : "location";
+            MegaLocation mega = MegaLocation.Current;
+            int returned = mega != null ? mega.ReturnCarriedItems() : runtime != null ? runtime.ReturnCarriedItems() : 0;
+            string name = mega != null && mega.Location != null ? mega.Location.DisplayName : runtime != null && runtime.Location != null ? runtime.Location.DisplayName : "location";
 
             yield return Fade(1f);
 
             if (_streetRoot != null) _streetRoot.SetActive(true);
+            if (mega != null) yield return mega.UnloadAll(); // its rooms first, then the building
             AsyncOperationHandle<SceneInstance> unload = Addressables.UnloadSceneAsync(_loaded);
             yield return unload;
             _hasLoaded = false;
@@ -128,6 +137,16 @@ namespace TidyUp.Locations
                     ? $"You set the {name}'s item down by the door. Things stay where they belong."
                     : $"You set the {name}'s {returned} items down by the door. Things stay where they belong.");
             }
+        }
+
+        private static T FindInScene<T>(Scene scene) where T : Component
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                T found = root.GetComponentInChildren<T>(true);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         private static LocationRuntime FindRuntime(Scene scene)

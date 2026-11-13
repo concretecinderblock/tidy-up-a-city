@@ -11,6 +11,9 @@ namespace TidyUp.Mechanics.Cleaning
     public sealed class CleaningProgress : MonoBehaviour
     {
         [SerializeField] private LocationDefinition _location;
+        [Tooltip("Session-store key; empty = the location id (rooms of a mega location use \"location/zone\").")]
+        [SerializeField] private string _stateKey;
+        private string StateKey => !string.IsNullOrEmpty(_stateKey) ? _stateKey : _location != null ? _location.Id : null;
         [SerializeField] private Cleanable[] _cleanables = Array.Empty<Cleanable>();
 
         private bool[] _clean = Array.Empty<bool>();
@@ -26,7 +29,7 @@ namespace TidyUp.Mechanics.Cleaning
         private void Awake()
         {
             _clean = new bool[_cleanables.Length];
-            bool[] saved = _location != null ? LocationStateStore.GetCleaned(_location.Id) : null;
+            bool[] saved = StateKey != null ? LocationStateStore.GetCleaned(StateKey) : null;
             if (saved != null && saved.Length != _cleanables.Length) saved = null; // layout changed since: start dusty
             for (int i = 0; i < _cleanables.Length; i++)
             {
@@ -52,12 +55,13 @@ namespace TidyUp.Mechanics.Cleaning
             if (index < 0) return;
             bool wasClean = _clean[index];
             _clean[index] = cleanable.IsClean;
-            if (_clean[index] != wasClean && _location != null) LocationStateStore.SaveCleaned(_location.Id, _clean);
+            if (_clean[index] != wasClean && StateKey != null) LocationStateStore.SaveCleaned(StateKey, _clean);
             ProgressChanged?.Invoke(this);
         }
 
-        internal void EditorConfigure(LocationDefinition location, Cleanable[] cleanables)
+        internal void EditorConfigure(LocationDefinition location, Cleanable[] cleanables, string stateKey = null)
         {
+            _stateKey = stateKey;
             _location = location;
             _cleanables = cleanables ?? Array.Empty<Cleanable>();
         }

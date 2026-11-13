@@ -323,14 +323,25 @@ namespace TidyUp.UI
             if (slot == SaveSession.CurrentSlot) sb.Append("  <color=#2E6E5E>· this game</color>");
             sb.Append('\n');
 
+            int shown = 0;
             for (int i = 0; i < data.locations.Count; i++)
             {
                 LocationSave l = data.locations[i];
-                if (i > 0) sb.Append("  ·  ");
+                if (l.id != null && l.id.Contains("/")) continue; // a room of a mega location: added to its location below
+                // A location's own slots plus all of its rooms' (mega locations).
+                int placed = l.filled != null ? l.PlacedCount : 0, total = l.filled != null ? l.filled.Length : 0;
+                string prefix = l.id + "/";
+                foreach (LocationSave zone in data.locations)
+                {
+                    if (zone.id == null || !zone.id.StartsWith(prefix, StringComparison.Ordinal) || zone.filled == null) continue;
+                    placed += zone.PlacedCount;
+                    total += zone.filled.Length;
+                }
+                if (shown++ > 0) sb.Append("  ·  ");
                 sb.Append(string.IsNullOrEmpty(l.name) ? l.id : l.name).Append(' ');
-                if (l.filled == null || l.filled.Length == 0) sb.Append('—');
-                else if (l.PlacedCount == l.filled.Length) sb.Append('✓');
-                else sb.Append(l.PlacedCount).Append('/').Append(l.filled.Length);
+                if (total == 0) sb.Append('—');
+                else if (placed == total) sb.Append('✓');
+                else sb.Append(placed).Append('/').Append(total);
             }
 
             int minutes = Mathf.FloorToInt(data.playTimeSeconds / 60f);

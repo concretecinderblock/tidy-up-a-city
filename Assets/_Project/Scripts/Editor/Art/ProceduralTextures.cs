@@ -15,6 +15,13 @@ namespace TidyUp.Editor.Art
         RoofTiles,
         Fabric,
         Stone,
+        // Rich interiors (art step 2)
+        Parquet,
+        Wainscot,
+        Damask,
+        Brick,
+        /// <summary>Full colour (navy coffers, gold stars and frames): tint white.</summary>
+        StarPanels,
     }
 
     /// <summary>
@@ -73,7 +80,7 @@ namespace TidyUp.Editor.Art
                 }
             }
 
-            WritePng(AlbedoPath(set), ToAlbedo(albedo));
+            WritePng(AlbedoPath(set), set == TextureSet.StarPanels ? StarPanelsColour() : ToAlbedo(albedo));
             WritePng(NormalPath(set), ToNormal(height, Strength(set)));
             AssetDatabase.ImportAsset(AlbedoPath(set));
             AssetDatabase.ImportAsset(NormalPath(set));
@@ -88,6 +95,9 @@ namespace TidyUp.Editor.Art
                 case TextureSet.Plaster: return 2f;
                 case TextureSet.Fabric: return 2.5f;
                 case TextureSet.Wood: return 1.5f;
+                case TextureSet.Damask: return 1.5f;
+                case TextureSet.Parquet: return 3f;
+                case TextureSet.StarPanels: return 3f;
                 default: return 4f;
             }
         }
@@ -105,6 +115,11 @@ namespace TidyUp.Editor.Art
                 case TextureSet.Cobbles: Cobbles(u, v, out albedo, out height); break;
                 case TextureSet.RoofTiles: RoofTiles(u, v, out albedo, out height); break;
                 case TextureSet.Fabric: Fabric(u, v, out albedo, out height); break;
+                case TextureSet.Parquet: Parquet(u, v, out albedo, out height); break;
+                case TextureSet.Wainscot: Wainscot(u, v, out albedo, out height); break;
+                case TextureSet.Damask: Damask(u, v, out albedo, out height); break;
+                case TextureSet.Brick: Brick(u, v, out albedo, out height); break;
+                case TextureSet.StarPanels: StarPanels(u, v, out _, out height, out albedo); break;
                 default: StoneBlocks(u, v, out albedo, out height); break;
             }
         }
@@ -311,6 +326,176 @@ namespace TidyUp.Editor.Art
                     else if (d < f2) f2 = d;
                 }
             }
+        }
+
+        // ───────────── Rich interiors (art step 2) ─────────────
+
+        /// <summary>
+        /// Basket-weave parquet: a 4×4 grid of squares, each of four boards, alternating direction like a
+        /// checkerboard. Per-board tint, grain along each board, fine dark seams.
+        /// </summary>
+        private static void Parquet(float u, float v, out float albedo, out float height)
+        {
+            const int cells = 4, boards = 4;
+            float cu = u * cells, cv = v * cells;
+            int cx = Mathf.FloorToInt(cu), cy = Mathf.FloorToInt(cv);
+            float fu = cu - cx, fv = cv - cy;
+            bool horizontal = ((cx + cy) & 1) == 0;
+            float across = horizontal ? fv : fu;
+            float along = horizontal ? fu : fv;
+            int board = Mathf.Min(boards - 1, Mathf.FloorToInt(across * boards));
+            float inBoard = across * boards - board;
+            int id = (cx * 31 + cy * 17) * 7 + board;
+
+            float grain = GrainStripes(along * 1.5f + id * 0.37f, inBoard * 0.6f + Fbm(u * 6f + board, v * 6f, 6, 2) * 0.1f, 14f);
+            float seam = Mathf.Min(Edge(Mathf.Min(inBoard, 1f - inBoard), 0.05f),
+                                   Mathf.Min(Edge(Mathf.Min(fu, 1f - fu), 0.012f), Edge(Mathf.Min(fv, 1f - fv), 0.012f)));
+            albedo = 0.78f + (Hash(id, 5) - 0.5f) * 0.2f + grain * 0.045f;
+            albedo *= Mathf.Lerp(0.45f, 1f, seam);
+            height = (0.55f + grain * 0.03f) * Mathf.Lerp(0.25f, 1f, seam);
+        }
+
+        /// <summary>
+        /// One raised wooden panel per tile: flat stiles and rails, a dark groove, a bevel up to the raised field.
+        /// The material offsets this by half a tile so a panel sits centred in the wall band.
+        /// </summary>
+        private static void Wainscot(float u, float v, out float albedo, out float height)
+        {
+            const float frame = 0.13f, groove = 0.018f, bevel = 0.07f;
+            float d = Mathf.Min(Mathf.Min(u, 1f - u), Mathf.Min(v, 1f - v));
+            float grain = GrainStripes(v * 2f, u * 0.5f + Fbm(u * 4f, v * 4f, 4, 2) * 0.08f, 12f);
+            if (d < frame)
+            {
+                height = 0.62f;
+                albedo = 0.8f + grain * 0.035f;
+            }
+            else if (d < frame + groove)
+            {
+                height = 0.3f;
+                albedo = 0.55f;
+            }
+            else
+            {
+                float t = Mathf.SmoothStep(0f, 1f, (d - frame - groove) / bevel);
+                height = Mathf.Lerp(0.32f, 0.72f, t);
+                albedo = Mathf.Lerp(0.68f, 0.84f, t) + grain * 0.035f;
+            }
+        }
+
+        /// <summary>
+        /// Damask wallpaper: a mirrored flourish in the middle of each tile and a smaller one on the corners
+        /// (half-drop), on faint stripes. Two quiet tones: it reads as pattern, not noise.
+        /// </summary>
+        private static void Damask(float u, float v, out float albedo, out float height)
+        {
+            float big = DamaskMotif((u - 0.5f) * 2.2f, (v - 0.5f) * 2.2f);
+            float cu = Mathf.Repeat(u + 0.5f, 1f) - 0.5f, cv = Mathf.Repeat(v + 0.5f, 1f) - 0.5f;
+            float small = DamaskMotif(cu * 3.6f, cv * 3.6f);
+            float motif = Mathf.Max(big, small * 0.85f);
+            float stripe = 0.5f + 0.5f * Mathf.Cos(u * Mathf.PI * 2f * 8f);
+            albedo = 0.66f + stripe * 0.02f + motif * 0.3f + (Fbm(u * 8f, v * 8f, 8, 2) - 0.5f) * 0.03f;
+            height = 0.5f + motif * 0.08f;
+        }
+
+        /// <summary>A symmetric flourish: petals around a heart, a leaf above and below, mirrored left/right.</summary>
+        private static float DamaskMotif(float x, float y)
+        {
+            x = Mathf.Abs(x);
+            float r = Mathf.Sqrt(x * x + y * y);
+            float a = Mathf.Atan2(y, x);
+            float petals = Mathf.SmoothStep(0.02f, -0.02f, r - (0.32f + 0.1f * Mathf.Cos(a * 6f)));
+            float heart = Mathf.SmoothStep(0.02f, -0.02f, r - 0.12f);
+            float leafTop = Mathf.SmoothStep(0.03f, -0.03f, Mathf.Sqrt(x * x * 9f + (y - 0.62f) * (y - 0.62f) * 2.2f) - 0.28f);
+            float leafBottom = Mathf.SmoothStep(0.03f, -0.03f, Mathf.Sqrt(x * x * 9f + (y + 0.62f) * (y + 0.62f) * 2.2f) - 0.28f);
+            float curl = Mathf.SmoothStep(0.025f, 0f, Mathf.Abs(Mathf.Sqrt((x - 0.42f) * (x - 0.42f) + y * y) - 0.16f)) * (x > 0.3f ? 1f : 0f);
+            float ring = Mathf.SmoothStep(0.02f, 0f, Mathf.Abs(r - 0.22f)) * 0.6f;
+            return Mathf.Clamp01(Mathf.Max(Mathf.Max(petals - heart * 0.5f + ring, Mathf.Max(leafTop, leafBottom)), curl));
+        }
+
+        /// <summary>Running-bond brick: 14 courses, 4 bricks each, mortar joints, per-brick tone and speckle.</summary>
+        private static void Brick(float u, float v, out float albedo, out float height)
+        {
+            const int courses = 14, perCourse = 4;
+            float cv = v * courses;
+            int row = Mathf.FloorToInt(cv);
+            float inRow = cv - row;
+            float cu = u * perCourse + ((row & 1) == 0 ? 0f : 0.5f);
+            int col = Mathf.FloorToInt(cu);
+            float inCol = cu - col;
+            int id = row * 13 + ((col % perCourse) + perCourse) % perCourse;
+
+            float mortar = Mathf.Min(Edge(Mathf.Min(inRow, 1f - inRow), 0.1f), Edge(Mathf.Min(inCol, 1f - inCol), 0.03f));
+            float speckle = Fbm(u * 32f, v * 32f, 32, 2);
+            float tone = 0.62f + Hash(id, 9) * 0.3f + (speckle - 0.5f) * 0.12f;
+            albedo = Mathf.Lerp(0.9f, tone, mortar); // light mortar, varied bricks
+            height = Mathf.Lerp(0.2f, 0.62f + (speckle - 0.5f) * 0.08f, mortar);
+        }
+
+        /// <summary>
+        /// Coffered ceiling panel: gilded frame, a navy field scattered with little gold stars. Colour is baked
+        /// in (StarPanelsColour); albedo here is only used to shade the height map.
+        /// </summary>
+        private static void StarPanels(float u, float v, out Color colour, out float height, out float albedo)
+        {
+            const float frame = 0.07f, lip = 0.02f;
+            float d = Mathf.Min(Mathf.Min(u, 1f - u), Mathf.Min(v, 1f - v));
+            Color navy = new Color(0.13f, 0.18f, 0.38f);
+            Color gold = new Color(0.86f, 0.7f, 0.38f);
+            float cloud = Fbm(u * 4f, v * 4f, 4, 3);
+
+            if (d < frame)
+            {
+                // Gilded frame with a little worn variation.
+                colour = gold * (0.92f + Fbm(u * 16f, v * 16f, 16, 2) * 0.1f);
+                height = 0.7f;
+                albedo = 0.8f;
+                return;
+            }
+            if (d < frame + lip)
+            {
+                colour = gold * 0.55f;
+                height = 0.45f;
+                albedo = 0.5f;
+                return;
+            }
+
+            colour = navy * (0.85f + cloud * 0.3f);
+            height = 0.4f;
+            albedo = 0.3f;
+
+            // Stars on a jittered 6×6 grid (not every cell), four-pointed, with a soft glow.
+            const int grid = 7;
+            float gu = u * grid, gv = v * grid;
+            int gx = Mathf.FloorToInt(gu), gy = Mathf.FloorToInt(gv);
+            for (int ox = -1; ox <= 1; ox++)
+            for (int oy = -1; oy <= 1; oy++)
+            {
+                int sx = gx + ox, sy = gy + oy;
+                int wx = ((sx % grid) + grid) % grid, wy = ((sy % grid) + grid) % grid;
+                int cell = wx * 37 + wy * 101;
+                if (Hash(cell, 3) < 0.2f) continue;
+                float px = sx + 0.2f + Hash(cell, 5) * 0.6f, py = sy + 0.2f + Hash(cell, 7) * 0.6f;
+                float dx = Mathf.Abs(gu - px), dy = Mathf.Abs(gv - py);
+                float size = 0.11f + Hash(cell, 11) * 0.08f;
+                float star = Mathf.Max(Mathf.SmoothStep(size, 0f, dx * 3f + dy), Mathf.SmoothStep(size, 0f, dy * 3f + dx));
+                float glow = Mathf.SmoothStep(size * 2.5f, 0f, Mathf.Sqrt(dx * dx + dy * dy)) * 0.25f;
+                float s = Mathf.Clamp01(star + glow);
+                if (s <= 0f) continue;
+                colour = Color.Lerp(colour, gold * 1.1f, s);
+                height = Mathf.Max(height, 0.4f + star * 0.15f);
+            }
+        }
+
+        private static Color32[] StarPanelsColour()
+        {
+            var pixels = new Color32[Size * Size];
+            for (int y = 0; y < Size; y++)
+            for (int x = 0; x < Size; x++)
+            {
+                StarPanels((float)x / Size, (float)y / Size, out Color c, out _, out _);
+                pixels[y * Size + x] = new Color(Mathf.Clamp01(c.r), Mathf.Clamp01(c.g), Mathf.Clamp01(c.b), 1f);
+            }
+            return pixels;
         }
 
         // ───────────── Output ─────────────

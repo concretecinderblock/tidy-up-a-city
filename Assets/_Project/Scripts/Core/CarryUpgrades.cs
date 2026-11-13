@@ -42,7 +42,7 @@ namespace TidyUp.Core
         public int TotalPlaced()
         {
             LocationRuntime active = GameServices.ActiveLocation;
-            string activeId = active != null && active.Location != null ? active.Location.Id : null;
+            string activeId = active != null && active.Location != null ? active.StateKey : null;
             int total = 0;
             foreach (KeyValuePair<string, bool[]> pair in LocationStateStore.Snapshot())
             {

@@ -170,3 +170,101 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - The middle stays open (rug, cauldron, display table, giant mushroom) for the mess.
 - **Performance** (Editor, this PC): frame 4.1 ms, 8,600 draw calls, 2.1 M triangles, load about 2.6 s. Cleaning has 20 dust-bunny fixtures and 21 wipe spots.
 - **Step 4 totals:** Bakery 3,998, Library 4,840, Fantasy shop 3,336, so 12,174 items across the slice.
+
+## 2026-11-12 · New art direction: warm semi-realistic, still all in-house
+- **Decision (Lowie):** get "as close as possible" to the reference screenshots (a grand wooden library with balconies and chandeliers, a book-strewn desk by a frosty window, a museum hall with a dinosaur skeleton and flowers) **without real assets**. This replaces the 2026-11-10 "procedural storybook" look.
+- **Plan, in steps with before/after stills:** (1) mood lighting, (2) richer materials, (3) an architecture kit (wainscoting, columns, mouldings, ceilings, chandeliers, frames), (4) generated book covers and item detail.
+
+## 2026-11-12 · Art step 1 · Mood lighting
+- **`InteriorMood`** (runtime, per location): locations load additively, so lighting belongs to the City scene. While a location is loaded, this swaps in the interior's ambient (trilight), haze (exponential fog) and reflection intensity, enables its post volume and renders its box-projected reflection probe once; it restores the street's settings on unload.
+- **Colour space:** ambient and fog colours are given in sRGB, but the project renders in linear, so they land roughly half as bright and more saturated. Ambient colours are therefore light and only gently tinted.
+- **`MoodAssets` + `MoodPreset`** (editor): per-location presets (Bakery golden morning, Library amber evening, Fantasy shop candle-warm with purple shadows) build a VolumeProfile (ACES tonemapping, colour adjustments, white balance, shadows/midtones/highlights, bloom, vignette).
+- **Lamps** become wide downlights (spot 150°) in warm white, six per room with soft shadows. That means no ceiling hot spots, and a spot's shadow is one shadow map instead of a point light's six.
+- **Windows:** frosty glass that blooms, plus faked daylight (an additive beam and a window-shaped bright patch on the floor), since the walls are solid.
+- **Shell shadows:** the room shell now casts shadows, so the street sun no longer lights interiors through walls and roof.
+- **Materials and camera:** varnished wood and trim (smoothness 0.55), polished floors (0.42); SMAA anti-aliasing on the player camera. Palettes are richer: the Library has deep green walls and mahogany, the Fantasy shop deep plum walls.
+- **Performance** (Editor, this PC): Bakery 4.4 ms, Library 5.7 ms, Fantasy shop 4.5 ms per frame.
+
+## 2026-11-12 · Art step 2 · Richer materials
+- **New generated texture sets** (`ProceduralTextures`, albedo plus normal map, tileable):
+  - Parquet: basket-weave squares of four boards, per-board tone, grain, seams.
+  - Wainscot: raised panel with stile, groove and bevel.
+  - Damask: mirrored flourish with half-drop motifs on faint stripes.
+  - Brick: running bond, 14 courses per metre tile, light mortar, per-brick tone and speckle.
+  - StarPanels: the first full-colour set, a gilded coffer frame around a navy field of gold four-pointed stars.
+- **`LocationPalette.UseRichSurfaces`** swaps wall, ceiling and floor materials and adds a **wainscot band**: 1 m of raised-panel wood round the lower walls with a chair rail, built by `BuildWainscot`. Box UVs are centred, so the panel texture is offset half a tile.
+- **The starry ceiling glows faintly** (its albedo doubles as emission at 55%), as a painted ceiling catching bounced lamplight. Otherwise the stars disappear under downlights.
+- **Per location:**
+  - Bakery: warm brick, plank ceiling, terracotta tiles, painted teal panelling.
+  - Library: green damask, starry coffered ceiling, parquet, mahogany panelling.
+  - Fantasy shop: plum damask, lilac-tinted starry ceiling, parquet, dark wood panelling.
+- **Performance** is unchanged at 4.3–5.7 ms per frame.
+
+## 2026-11-12 · Art step 3 · Architecture kit
+- **`ArchitectureKit`** (editor, all generated) builds multi-part pieces as one mesh with a submesh per material, so a room full of them stays cheap. Wall pieces follow the window convention: local -Z faces the room. The pieces:
+  - **Chandeliers** replace pendant lamps (`BuildLamp` delegates to it): chain, turned brass body, a ring of six candles with glowing flames, and a hidden lamp light that the mood turns into the shadowed downlight. They hang lower in tall rooms.
+  - **Wall sconces:** a brass bracket and candle with a small unshadowed point light that washes the wall. They're named "Sconce Light", so the mood leaves them alone; it only tunes lights named "Light".
+  - **Pilasters** (base, shaft, flutes, moulded capital) between the windows and beside the door, with sconces on them. Sconces also sit above the north wall's tall fixtures.
+  - **Crown moulding:** a real profile swept along the walls (`MeshGen.Extrude`) instead of a flat strip.
+  - **Framed pictures** in gilt frames, with generated pictures: golden-hour landscapes (Bakery), parchment city maps with streets, river and compass rose (Library, after the reference), starry nights over rooftops (Fantasy shop).
+  - **Bookcase crowns:** every Bookcase-style fixture gets a carved crown along the front and sides.
+- **The Library is now two storeys** (6.4 m) with a **gallery** at 3 m round three walls:
+  - a deck with a moulded fascia and brackets
+  - a turned balustrade, merged into one mesh per run
+  - 17 full-height decorative bookcases with seeded filler books, merged per case
+  - Decor only; the player stays downstairs.
+- **`LocationPalette.Architecture`** (default on) switches all of this; `GalleryHeight` stops pilasters under a gallery.
+- **Performance** (Editor, this PC): Bakery 4.7 ms / 7.7 k draws / 3.4 M tris; Library 6.3 ms / 16 k draws / 6.9 M tris (the gallery's books); Fantasy shop 4.6 ms / 9.2 k draws / 2.4 M tris. Fine on PC. For Quest, the gallery books would need a cheaper version (a texture or impostor).
+
+## 2026-11-12 · Art step 4 · Book covers and item detail
+- **Books (`book_lite`):**
+  - The cover is a cloth-weave material in the kind's colour, with edges rubbed lighter.
+  - One **shared detail material** (`Book_Detail`, alpha-cut, metallic map) carries a generated 2×2 atlas: two gold-foil cover designs (double frame and diamond emblem; corner flourishes and a round crest with a star; both with "lettering"), spine bands with a title panel, and the cream page block.
+  - Foil quads sit about 1 mm above front and back covers and the spine. Each book picks a design by a stable hash of its id.
+  - Pages and foil share the detail material, so a book is still **two draws**. The atlas keeps alpha coverage in its mips, so foil doesn't vanish at a distance.
+- **Potions:** clear glass bottles (transparent, full-strength reflections) holding a separate coloured liquid, filled to about two thirds and glowing faintly, plus a cork. **Crystals** glow softly from inside.
+- **Baked goods** (loaf, baguette, croissant, bun, bagel, cookie, pie) use a crust texture (mottled bake, flour flecks) tinted per kind.
+- **Bug fixed in `MeshAssets.GetOrCreate`:** regenerated meshes were copied into existing assets with `EditorUtility.CopySerialized`. That updated the asset data but not the copy already on the GPU, so the old shape kept rendering (no foil, bottles without potion) until the asset reloaded. Meshes are now copied through the Mesh API, which refreshes the GPU copy; the asset keeps its GUID.
+- **Performance** is unchanged: Bakery 5.1 ms / 7.7 k draws, Library 6.3 ms / 16 k, Fantasy shop 5.5 ms / 10 k.
+
+## 2026-11-13 · A living street
+- **Why (Lowie):** the street with the three shops looked boring; make it more alive and part of the world.
+- **`StreetBuilder`** (editor, all generated, called by `CityGreyboxBuilder`):
+  - **Both sides built up:** townhouses at both ends of the shop row, and a full south row of seven houses replacing the grass verge (south boundary now at the house fronts).
+  - **House details:** plinth, string courses, carved cornice, pitched roof, chimneys (some smoking), shuttered windows (some lit, some evening-dim), flower boxes, the odd balcony, a door with a lantern.
+  - **Ground floors with character:** a café with a striped awning and a terrace of tables and parasols, the post office with a red postbox (a nod to the future City Post), a florist with buckets of flowers. Blade signs hang over the pavement.
+  - **The street goes on:** a stone archway at the east end and the clock-tower square at the west, with more houses beyond both ends fading into haze. Each view is closed by a big building (a town hall with a clock turret to the east, a tall row to the west), and ground runs on under the whole town.
+  - **Skyline:** house blocks, a church spire and a copper dome above the roofs.
+  - **Bunting and string lights** criss-cross the street. Pennants are two separate faces so both sides are lit.
+  - **Props:** a fountain with spray on the square, a fruit stall, barrels and crates, planter trees along the south pavement, laundry lines across the alleys. The shopfronts gained a cornice and door lanterns.
+- **Life** (runtime, `TidyUp.Ambience`):
+  - `PigeonFlock`: pigeons hop and peck, scatter and circle when the player comes within 3 m, and land again.
+  - `Stroller`: two townsfolk walk the pavements, pausing to look about.
+  - Particles: chimney smoke drifting down the street, falling leaves, fountain spray.
+- **Light:** golden late afternoon. A low warm sun with soft shadows, warm trilight ambient, exponential haze (0.016) and the `Street` post volume (priority 10; interiors override it with priority 50).
+- **Cost:** about 3.5 ms per frame, 5 k draws, 2 M tris on the street (Editor, this PC).
+
+## 2026-11-13 · Mega town: mega locations streamed in rooms (Bakery first)
+- **Why (Jesse):** the buildings felt too small; locations should be massive, like "Tidy Up a Library". The setting is a **mega town** (a city reads as modern), and every location is a mega place, big outside too.
+- **Architecture:** a location is a **shell scene** plus **zone scenes** (one per room).
+  - The shell (`Location_Bakery`) holds the building: walls, doorways, light, mood, the NPC and memory, and a `MegaLocation`.
+  - `MegaLocation` streams the zones through Addressables. A room loads within 20 m of its edge and unloads 8 m past that. A room is never unloaded while its items are carried, and the room the player stands in is the active location (HUD, Tidy Sense, hints).
+  - Each zone scene is a full location set (progress, Muddle, hints, cleaning). Its `LocationRuntime` has a `zoneId` and saves under `"bakery/<zone>"`.
+- **Grand total:** `LocationStateStore.PlacedCount("bakery")` sums every `"bakery/…"` key. `ZoneInfo.TotalSlots` is recorded at build time, so the total is known before a room is visited. Restoration (the baker and the memory at 100%) follows the grand total. The save-slot summary adds the rooms up.
+- **Hard-binding kept:** every kind of item lives in exactly one room. Items never change scene; carried items are set down by the street door when leaving.
+- **Building map** (`MapView`, on the HUD; built at runtime from the zone rectangles, so any mega location gets one):
+  - a corner minimap that follows the player
+  - M (gamepad Back) for the full floor plan: rooms, doorways, the street door, and each room's progress
+- **Mega Bakery** (`MegaBakeryBuilder`): a 60 × 40 m ground floor with 6 m ceilings and six 20 × 20 m rooms, 11,060 slots in total (Jesse chose ~10k):
+  - Shop Hall: cake cases, pie stands, the sales counter
+  - Bread Hall: loaf walls, bread racks
+  - Pastry Salon: pastry cases, café tables
+  - Cake & Cookie Room: cookie counters, cake stands
+  - Pantry: jars, sacks
+  - Bakehouse: roll racks, ovens, workbenches
+  - Signed doorways, offset so long sightlines don't show an unloaded room. Wall fixtures rise to about 4 m with stocked decorative upper shelves (`ShelfSettings.FillerBaskets`). Upper floors come later.
+- **Outside:** the Grand Bakery closes the west end of the street, behind a small square:
+  - 32 m wide, three storeys over a 6 m ground floor
+  - an entrance pavilion with a pediment, an arched double door up two steps, arched shop windows with awnings, dormers, smoking chimneys
+  - the street now runs on to it; the old bakery's spot is a townhouse, and the clock tower moved to the side of the square
+- **Cost (Editor):** 5–8 ms per frame. Draw calls run 10–16 k with 3–4 rooms loaded, so batching items is the next performance step.

@@ -30,12 +30,39 @@ namespace TidyUp.Locations
             return !string.IsNullOrEmpty(locationId) && Filled.TryGetValue(locationId, out bool[] stored) ? stored : null;
         }
 
+        /// <summary>
+        /// Placed items for a location: its own key plus every zone key under it ("bakery/bread_hall"), so a
+        /// mega location's rooms add up to one grand total.
+        /// </summary>
         public static int PlacedCount(string locationId)
         {
-            bool[] stored = Get(locationId);
-            if (stored == null) return 0;
+            if (string.IsNullOrEmpty(locationId)) return 0;
+            int count = PlacedCountExact(locationId);
+            string prefix = locationId + "/";
+            foreach (KeyValuePair<string, bool[]> pair in Filled)
+                if (pair.Key.StartsWith(prefix, StringComparison.Ordinal)) count += CountTrue(pair.Value);
+            return count;
+        }
+
+        /// <summary>Placed items under exactly this key (one location or one zone).</summary>
+        public static int PlacedCountExact(string key) => CountTrue(Get(key));
+
+        /// <summary>True once the location, or any of its zones, has been visited.</summary>
+        public static bool IsVisited(string locationId)
+        {
+            if (Get(locationId) != null) return true;
+            if (string.IsNullOrEmpty(locationId)) return false;
+            string prefix = locationId + "/";
+            foreach (string key in Filled.Keys)
+                if (key.StartsWith(prefix, StringComparison.Ordinal)) return true;
+            return false;
+        }
+
+        private static int CountTrue(bool[] flags)
+        {
+            if (flags == null) return 0;
             int count = 0;
-            for (int i = 0; i < stored.Length; i++) if (stored[i]) count++;
+            for (int i = 0; i < flags.Length; i++) if (flags[i]) count++;
             return count;
         }
 

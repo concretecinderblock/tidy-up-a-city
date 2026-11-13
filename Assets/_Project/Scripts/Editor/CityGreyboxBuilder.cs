@@ -37,12 +37,14 @@ namespace TidyUp.Editor
             public Color Wall;
             public Color Awning;
             public string Sign;
+            /// <summary>A mega location: a grand building closing the west end of the street instead of a shopfront.</summary>
+            public bool Grand;
         }
 
         private static readonly Shop[] Shops =
         {
             new Shop { AssetPath = BakeryGreyboxBuilder.LocationAssetPath, ScenePath = BakeryGreyboxBuilder.LocationScenePath, Address = BakeryGreyboxBuilder.LocationAddress,
-                X = -11f, Wall = new Color(0.97f, 0.86f, 0.64f), Awning = new Color(0.2f, 0.55f, 0.56f), Sign = "BAKERY" },
+                X = -11f, Wall = new Color(0.97f, 0.86f, 0.64f), Awning = new Color(0.2f, 0.55f, 0.56f), Sign = "BAKERY", Grand = true },
             new Shop { AssetPath = LibraryGreyboxBuilder.LocationAssetPath, ScenePath = LibraryGreyboxBuilder.LocationScenePath, Address = LibraryGreyboxBuilder.LocationAddress,
                 X = 0f, Wall = new Color(0.85f, 0.78f, 0.66f), Awning = new Color(0.24f, 0.4f, 0.3f), Sign = "LIBRARY" },
             new Shop { AssetPath = FantasyShopGreyboxBuilder.LocationAssetPath, ScenePath = FantasyShopGreyboxBuilder.LocationScenePath, Address = FantasyShopGreyboxBuilder.LocationAddress,
@@ -74,10 +76,13 @@ namespace TidyUp.Editor
             {
                 LocationDefinition location = AssetDatabase.LoadAssetAtPath<LocationDefinition>(shop.AssetPath);
                 locations.Add(location);
-                BuildShopfront(street, shop, location, p);
+                if (shop.Grand) BuildGrandEntrance(street, shop, location, p);
+                else BuildShopfront(street, shop, location, p);
             }
             BuildClockTower(street, p);
             BuildStreetFurniture(street, p);
+            StreetBuilder.Build(street, StreetCentre);   // the rest of the town: both rows, street ends, skyline, life
+            StreetBuilder.BuildMood(street);             // golden late afternoon (interiors swap in their own mood)
             BuildBounds(street);
 
             PlayerRig player = LocationKit.BuildPlayerRig(StreetCentre + new Vector3(0f, 0.05f, -2f), 0f, p);
@@ -118,6 +123,12 @@ namespace TidyUp.Editor
                 AddressableAssetEntry entry = settings.CreateOrMoveEntry(guid, group, false, false);
                 entry.SetAddress(shop.Address, false);
             }
+            // The mega Bakery's rooms stream in as their own scenes.
+            foreach ((string scenePath, string address) in MegaBakeryBuilder.ZoneScenes)
+            {
+                AddressableAssetEntry zone = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(scenePath), group, false, false);
+                zone.SetAddress(address, false);
+            }
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
             AssetDatabase.SaveAssets();
         }
@@ -133,6 +144,25 @@ namespace TidyUp.Editor
             LocationKit.Furniture("Pavement N", street, StreetCentre + new Vector3(0f, 0.01f, 6.5f), new Vector3(46f, 0.02f, 3f), pavement);
             LocationKit.Furniture("Pavement S", street, StreetCentre + new Vector3(0f, 0.01f, -6.5f), new Vector3(46f, 0.02f, 3f), pavement);
             LocationKit.Furniture("Green", street, StreetCentre + new Vector3(0f, 0.015f, -8.6f), new Vector3(46f, 0.02f, 1.2f), grass);
+        }
+
+        /// <summary>
+        /// A mega location's entrance: the grand building (StreetBuilder) closing the west end of the street, its
+        /// arched door made enterable. The return point is at the foot of the steps, facing back down the street.
+        /// </summary>
+        private static void BuildGrandEntrance(Transform street, Shop shop, LocationDefinition location, LocationPalette p)
+        {
+            Transform door = StreetBuilder.BuildGrandBakery(street, StreetCentre, StreetCentre + new Vector3(-40f, 0f, 0f),
+                Quaternion.Euler(0f, -90f, 0f), shop.Wall, shop.Awning);
+            BoxCollider target = door.gameObject.AddComponent<BoxCollider>();
+            target.isTrigger = true;
+            target.center = new Vector3(0f, 1.6f, -0.6f); // reaches out past the street bound, over the top step
+            target.size = new Vector3(3.4f, 3.2f, 1.0f);
+            var returnPoint = new GameObject("Return Point").transform;
+            returnPoint.SetParent(door, false);
+            returnPoint.localPosition = new Vector3(0f, 0.05f, -2.6f);
+            returnPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            door.gameObject.AddComponent<LocationDoor>().EditorConfigure(location, returnPoint);
         }
 
         /// <summary>A two-storey shop building facing the street, with an enterable door, windows, awning and sign.</summary>
@@ -161,6 +191,9 @@ namespace TidyUp.Editor
             front.transform.localRotation = Quaternion.Euler(-pitch, 0f, 0f);
             GameObject back = LocationKit.Furniture("Roof Back", root, new Vector3(0f, height + rise * 0.5f, depth * 0.5f + half * 0.5f), roofSize, p.Roof);
             back.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+            // A carved cornice under the eaves and a lantern either side of the door, like the neighbours.
+            Art.ArchitectureKit.CrownRun(root, root.position + new Vector3(0f, height - 0.24f, 0f), Quaternion.identity, width, p.Trim);
+            foreach (int side in new[] { -1, 1 }) Art.ArchitectureKit.Sconce(root, root.position + new Vector3(side * 1.05f, 2.0f, 0f), Quaternion.identity);
 
             // Shop windows (glowing warm: someone's home) and an awning over them.
             for (int side = -1; side <= 1; side += 2)
@@ -208,7 +241,7 @@ namespace TidyUp.Editor
             Material hands = GreyboxAssets.Lit("City_ClockHands", new Color(0.12f, 0.1f, 0.1f));
             var tower = new GameObject("Clock Tower").transform;
             tower.SetParent(street, false);
-            tower.position = StreetCentre + new Vector3(-20f, 0f, 2f);
+            tower.position = StreetCentre + new Vector3(-28f, 0f, 5.4f); // at the side of the square: the street looks straight at the Grand Bakery
             LocationKit.Furniture("Tower", tower, new Vector3(0f, 5f, 0f), new Vector3(3f, 10f, 3f), stone);
             GameObject cap = LocationKit.Furniture("Spire", tower, new Vector3(0f, 10.8f, 0f), new Vector3(2.2f, 1.6f, 2.2f), p.Roof);
             cap.transform.localRotation = Quaternion.Euler(0f, 45f, 0f);
@@ -255,20 +288,10 @@ namespace TidyUp.Editor
                 light.shadows = LightShadows.None;
             }
 
-            // Trees and benches between the lampposts.
+            // Benches against the houses opposite (the trees now stand in planters, see StreetBuilder).
             for (int i = 0; i < 4; i++)
             {
                 float x = -12f + i * 8f;
-                var tree = new GameObject($"Tree {i + 1}").transform;
-                tree.SetParent(furniture, false);
-                tree.position = StreetCentre + new Vector3(x, 0f, -8.4f);
-                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Trunk", tree, new Vector3(0f, 1.2f, 0f), new Vector3(0.35f, 1.2f, 0.35f), trunk);
-                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Crown", tree, new Vector3(0f, 3.1f, 0f), new Vector3(2.6f, 2.3f, 2.6f), leaves);
-                CapsuleCollider c = tree.gameObject.AddComponent<CapsuleCollider>();
-                c.center = new Vector3(0f, 1.2f, 0f);
-                c.radius = 0.3f;
-                c.height = 2.4f;
-
                 var seat = new GameObject($"Bench {i + 1}").transform;
                 seat.SetParent(furniture, false);
                 seat.position = StreetCentre + new Vector3(x + 2.2f, 0f, -7f);
@@ -293,9 +316,14 @@ namespace TidyUp.Editor
         {
             var bounds = new GameObject("Street Bounds").transform;
             bounds.SetParent(street, false);
-            AddWall(bounds, "North", StreetCentre + new Vector3(0f, 2f, 7.95f), new Vector3(46f, 4f, 0.1f));
-            AddWall(bounds, "South", StreetCentre + new Vector3(0f, 2f, -9f), new Vector3(46f, 4f, 0.2f));
-            AddWall(bounds, "West", StreetCentre + new Vector3(-23f, 2f, 0f), new Vector3(0.2f, 4f, 18f));
+            // The street runs on west into the square in front of the Grand Bakery (x -29.5 .. -37.75, z ±15).
+            AddWall(bounds, "North", StreetCentre + new Vector3(-3.25f, 2f, 7.95f), new Vector3(52.5f, 4f, 0.1f));
+            AddWall(bounds, "South", StreetCentre + new Vector3(-3.25f, 2f, -8.05f), new Vector3(52.5f, 4f, 0.1f));
+            AddWall(bounds, "Square North", StreetCentre + new Vector3(-33.6f, 2f, 15f), new Vector3(8.3f, 4f, 0.1f));
+            AddWall(bounds, "Square South", StreetCentre + new Vector3(-33.6f, 2f, -15f), new Vector3(8.3f, 4f, 0.1f));
+            AddWall(bounds, "Square NE", StreetCentre + new Vector3(-29.5f, 2f, 11.5f), new Vector3(0.1f, 4f, 7f));
+            AddWall(bounds, "Square SE", StreetCentre + new Vector3(-29.5f, 2f, -11.5f), new Vector3(0.1f, 4f, 7f));
+            AddWall(bounds, "West", StreetCentre + new Vector3(-37.75f, 2f, 0f), new Vector3(0.1f, 4f, 30f));
             AddWall(bounds, "East", StreetCentre + new Vector3(23f, 2f, 0f), new Vector3(0.2f, 4f, 18f));
         }
 

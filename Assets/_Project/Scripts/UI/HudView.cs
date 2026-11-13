@@ -40,6 +40,8 @@ namespace TidyUp.UI
         private LocationProgress _progress;
         private HintService _hints;
         private CleaningProgress _cleaning;
+        private LocationRuntime _runtime;
+        private MegaLocation _mega;
 
         private void Awake()
         {
@@ -67,6 +69,8 @@ namespace TidyUp.UI
             }
             GameServices.ActiveLocationChanged += Bind;
             GameServices.Announcement += ShowMessage;
+            MegaLocation.CurrentChanged += BindMega;
+            BindMega(MegaLocation.Current);
             Bind(GameServices.ActiveLocation);
         }
 
@@ -91,6 +95,8 @@ namespace TidyUp.UI
             }
             GameServices.ActiveLocationChanged -= Bind;
             GameServices.Announcement -= ShowMessage;
+            MegaLocation.CurrentChanged -= BindMega;
+            BindMega(null);
             Bind(null);
         }
 
@@ -131,6 +137,7 @@ namespace TidyUp.UI
             if (_hints != null) _hints.UnlocksChanged -= HandleUnlocksChanged;
             if (_cleaning != null) _cleaning.ProgressChanged -= HandleCleaningChanged;
 
+            _runtime = location;
             _progress = location != null ? location.Progress : null;
             _hints = location != null ? location.Hints : null;
             _cleaning = location != null ? location.Cleaning : null;
@@ -143,6 +150,20 @@ namespace TidyUp.UI
             }
             if (_hints != null) _hints.UnlocksChanged += HandleUnlocksChanged;
             RefreshChecklist();
+        }
+
+        private void BindMega(MegaLocation mega)
+        {
+            if (_mega != null) _mega.Completed -= HandleMegaCompleted;
+            _mega = mega;
+            if (_mega != null) _mega.Completed += HandleMegaCompleted;
+            RefreshChecklist();
+        }
+
+        private void HandleMegaCompleted(MegaLocation mega)
+        {
+            string name = mega.Location != null ? mega.Location.DisplayName : "Location";
+            ShowMessage("The whole " + name + " is tidy again!");
         }
 
         // The memory overlay owns the screen while it plays.
@@ -231,7 +252,13 @@ namespace TidyUp.UI
                 return;
             }
 
-            string locationName = _progress.Location != null ? _progress.Location.DisplayName : "Location";
+            string locationName = _runtime != null ? _runtime.DisplayName : _progress.Location != null ? _progress.Location.DisplayName : "Location";
+            if (_mega != null && _runtime != null && _runtime.IsZone)
+            {
+                // A mega location: the grand total over every room first, then the room you're in.
+                string megaName = _mega.Location != null ? _mega.Location.DisplayName : "Location";
+                _builder.Append("<b><size=22>").Append(megaName).Append("  ").Append(_mega.Placed.ToString("N0")).Append('/').Append(_mega.Total.ToString("N0")).Append("</size></b>\n");
+            }
             _builder.Append("<b>").Append(locationName).Append("  ").Append(_progress.Placed).Append('/').Append(_progress.Total).Append("</b>");
             if (_cleaning != null && _cleaning.Total > 0)
             {
@@ -278,7 +305,7 @@ namespace TidyUp.UI
                 _builder.Append('\n').Append(location.DisplayName).Append("  ");
                 int total = location.TotalSlots;
                 int placed = LocationStateStore.PlacedCount(location.Id);
-                if (LocationStateStore.Get(location.Id) == null) _builder.Append("<color=#C8C8C8>not visited</color>");
+                if (!LocationStateStore.IsVisited(location.Id)) _builder.Append("<color=#C8C8C8>not visited</color>");
                 else if (total > 0 && placed >= total) _builder.Append("<color=#9BE39B>✓</color>");
                 else _builder.Append(placed).Append('/').Append(total);
             }
@@ -300,7 +327,7 @@ namespace TidyUp.UI
 
         private void HandleCompleted(LocationProgress progress)
         {
-            string locationName = progress.Location != null ? progress.Location.DisplayName : "Location";
+            string locationName = _runtime != null && _runtime.Progress == progress ? _runtime.DisplayName : progress.Location != null ? progress.Location.DisplayName : "Location";
             ShowMessage(locationName + " is tidy again!");
         }
 

@@ -9,6 +9,11 @@ namespace TidyUp.Core
     public static class TidyLayers
     {
         public const string ItemsName = "Items";
+        /// <summary>The carried stack in your hands: only the player's overlay camera draws it (never clips into walls).</summary>
+        public const string HeldName = "Held";
+        private static int _held = -2;
+
+        public static int Held => _held == -2 ? (_held = LayerMask.NameToLayer(HeldName)) : _held;
         private static int _items = -2;
 
         /// <summary>Index of the Items layer, or -1 if the project doesn't define it.</summary>
@@ -18,6 +23,10 @@ namespace TidyUp.Core
         public static int WithoutItems(int mask) => Items >= 0 ? mask & ~(1 << Items) : mask;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void Reset() => _items = -2;
+        private static void Reset()
+        {
+            _items = -2;
+            _held = -2;
+        }
     }
 }

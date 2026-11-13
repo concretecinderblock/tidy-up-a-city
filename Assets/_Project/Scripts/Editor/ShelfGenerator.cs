@@ -49,6 +49,8 @@ namespace TidyUp.Editor
         [Tooltip("Colours for filler books (shared materials).")]
         public Material[] FillerMaterials;
         public int FillerSeed = 7;
+        /// <summary>Baskets: wide stock (baskets, crates, tins) on the decorative upper shelves instead of books.</summary>
+        public bool FillerBaskets;
 
         public float FrameHeight => TotalHeight + FillerShelvesAbove * RowHeight;
 
@@ -136,6 +138,8 @@ namespace TidyUp.Editor
                     Mark(GreyboxAssets.Box("Side L", frame, new Vector3(-sideX, height * 0.5f, 0f), new Vector3(s.PanelThickness, height, depth), body));
                     Mark(GreyboxAssets.Box("Side R", frame, new Vector3(sideX, height * 0.5f, 0f), new Vector3(s.PanelThickness, height, depth), body));
                     Mark(GreyboxAssets.Box("Back", frame, new Vector3(0f, height * 0.5f, depth * 0.5f + 0.01f), new Vector3(totalW, height, 0.02f), body));
+                    // Art step 3: bookcases wear a carved crown moulding.
+                    if (s.Style == ShelfStyle.Bookcase) Art.ArchitectureKit.BookcaseCrown(frame, totalW, depth, height, s.FrameMaterial);
                     if (s.Style == ShelfStyle.Case && s.GlassMaterial != null)
                     {
                         // Glass front and top: no colliders, so the reticle reaches the slots inside.
@@ -162,6 +166,22 @@ namespace TidyUp.Editor
                 float floorY = s.BaseHeight + (s.Shelves + shelf) * s.RowHeight + s.BoardThickness;
                 float x = -s.InnerWidth * 0.5f + 0.005f;
                 float end = s.InnerWidth * 0.5f - 0.005f;
+                if (s.FillerBaskets)
+                {
+                    // Baskets, crates and tins up high: a stocked bakery's back shelves.
+                    while (true)
+                    {
+                        float width = Mathf.Lerp(0.3f, 0.55f, (float)random.NextDouble());
+                        if (x + width > end) break;
+                        float h = s.SlotSize.y * Mathf.Lerp(0.55f, 0.85f, (float)random.NextDouble());
+                        Material material = s.FillerMaterials[random.Next(s.FillerMaterials.Length)];
+                        GameObject basket = GreyboxAssets.Box("Basket", filler, new Vector3(x + width * 0.5f, floorY + h * 0.5f, 0.01f),
+                            new Vector3(width * 0.9f, h, s.Depth * 0.8f), material, keepCollider: false);
+                        Mark(basket);
+                        x += width + (random.NextDouble() < 0.2 ? 0.08f : 0.02f);
+                    }
+                    continue;
+                }
                 while (true)
                 {
                     float width = Mathf.Lerp(0.025f, 0.05f, (float)random.NextDouble());

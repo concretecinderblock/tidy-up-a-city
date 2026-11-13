@@ -296,6 +296,39 @@ namespace TidyUp.Editor.Art
             mesh.RecalculateBounds();
         }
 
+        // ───────────── Extrusion (mouldings, rails, cornices) ─────────────
+
+        /// <summary>
+        /// Sweeps a moulding profile along X, centred, length metres long. Profile points are (out, up): "out" is
+        /// the distance from the wall into the room, which becomes -Z. Order them from the bottom at the wall,
+        /// round the outside, to the top at the wall, so faces point into the room. Smooth shading; UVs in metres
+        /// (x along the run, v along the profile). Ends are open: runs meet walls or each other in corners.
+        /// </summary>
+        public static Mesh Extrude(IList<Vector2> profile, float length, string name = "Extrusion")
+        {
+            var b = new Builder();
+            float half = length * 0.5f;
+            float run = 0f;
+            for (int i = 0; i < profile.Count; i++)
+            {
+                if (i > 0) run += Vector2.Distance(profile[i], profile[i - 1]);
+                foreach (float x in new[] { -half, half })
+                {
+                    b.Vertices.Add(new Vector3(x, profile[i].y, -profile[i].x));
+                    b.Uvs.Add(new Vector2(x, run));
+                }
+            }
+            for (int i = 0; i < profile.Count - 1; i++)
+            {
+                Vector2 t = profile[i + 1] - profile[i];
+                var outward = new Vector3(0f, -t.x, -t.y); // (out, up) normal (t.y, -t.x), with out mapped to -Z
+                int a = i * 2;
+                b.Triangle(a, a + 1, a + 3, outward);
+                b.Triangle(a, a + 3, a + 2, outward);
+            }
+            return b.ToMesh(name, recalculateNormals: true);
+        }
+
         // ───────────── Builder ─────────────
 
         private sealed class Builder

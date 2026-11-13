@@ -62,8 +62,14 @@ namespace TidyUp.Editor
                 new[] { MechanicFamily.LivingItems, MechanicFamily.ShelfSort }, 1313, items, memory);
 
             LocationPalette p = LocationPalette.Create("Fantasy",
-                floor: new Color(0.55f, 0.36f, 0.24f), wall: new Color(0.78f, 0.68f, 0.88f),
-                wood: new Color(0.38f, 0.24f, 0.2f), accent: new Color(0.16f, 0.45f, 0.5f));
+                floor: new Color(0.45f, 0.28f, 0.18f), wall: new Color(0.4f, 0.3f, 0.5f),   // deep plum walls
+                wood: new Color(0.34f, 0.19f, 0.15f), accent: new Color(0.14f, 0.38f, 0.42f));
+            p.Mood = Art.MoodPreset.FantasyShop;
+            p.UseRichSurfaces("Fantasy",
+                Art.TextureSet.Damask, new Color(0.44f, 0.32f, 0.54f), 0.7f,          // plum damask
+                Art.TextureSet.StarPanels, new Color(0.88f, 0.8f, 1f), 2.0f,          // lilac-tinted starry ceiling
+                Art.TextureSet.Parquet, new Color(0.48f, 0.3f, 0.2f), 1.6f,           // parquet
+                new Color(0.34f, 0.19f, 0.15f));                                      // dark wood panelling
             AssetDatabase.SaveAssets();
 
             // 2. Scene
@@ -229,6 +235,9 @@ namespace TidyUp.Editor
             {
                 LocationKit.BuildLamp($"Lamp {++lamp}", decor, new Vector3(lx, 0f, lz), WallHeight, p);
             }
+            foreach (int side in new[] { -1, 1 })
+                Art.ArchitectureKit.Painting(decor, new Vector3(side * 3.6f, 2.0f, -halfZ), Quaternion.Euler(0f, 180f, 0f), new Vector2(1.2f, 0.9f),
+                    Art.ArchitectureKit.Picture.NightSky, side < 0 ? 31 : 32);   // starry nights over the rooftops
             LocationKit.BuildWallSign(decor, "Shop Sign", "POTIONS & CURIOSITIES", new Vector3(0f, 2.6f, halfZ - 0.04f), Quaternion.identity,
                 new Vector2(2.6f, 0.36f), p.Wood, new Color(0.75f, 0.6f, 1f), new Color(0.2f, 0.08f, 0.3f));
 

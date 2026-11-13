@@ -18,6 +18,8 @@ namespace TidyUp.Muddle
     public sealed class MuddleScatterer : MonoBehaviour
     {
         [SerializeField] private LocationDefinition _location;
+        [Tooltip("Session-store key; empty = the location id. Rooms of a mega location use \"location/zone\".")]
+        [SerializeField] private string _stateKey;
         [Tooltip("Used when no LocationDefinition is set.")]
         [SerializeField] private int _seed = 1;
         [Range(0f, 1f)]
@@ -30,7 +32,16 @@ namespace TidyUp.Muddle
         private const int Attempts = 12;
         private readonly ScatterGrid _grid = new ScatterGrid(0.5f);
 
-        public int Seed => _location != null ? _location.MuddleSeed : _seed;
+        private string StateKey => !string.IsNullOrEmpty(_stateKey) ? _stateKey : _location != null ? _location.Id : null;
+        // Each room of a mega location gets its own mess from the location seed.
+        public int Seed => _location != null ? _location.MuddleSeed + (string.IsNullOrEmpty(_stateKey) ? 0 : Hash(_stateKey)) : _seed;
+
+        private static int Hash(string s)
+        {
+            int h = 17;
+            foreach (char c in s) h = h * 31 + c;
+            return h & 0x7fff;
+        }
         public float MuddleFraction => _location != null ? _location.MuddleFraction : _muddleFraction;
 
         /// <summary>True once the mess exists; progress saved before this would be the tidy layout.</summary>
@@ -56,7 +67,7 @@ namespace TidyUp.Muddle
             List<ItemSlot> slots = CollectSlots();
             float fraction = MuddleFraction;
             // Returning to a location: slots the player already filled stay filled.
-            bool[] saved = _location != null ? LocationStateStore.Get(_location.Id) : null;
+            bool[] saved = StateKey != null ? LocationStateStore.Get(StateKey) : null;
             if (saved != null && saved.Length != slots.Count) saved = null; // layout changed since: ignore
 
             // Decide everything first (one roll per slot keeps the choice stable), then shuffle so kinds mix.
@@ -191,8 +202,9 @@ namespace TidyUp.Muddle
             return result;
         }
 
-        internal void EditorConfigure(LocationDefinition location, SlotGroup[] groups, BoxCollider[] scatterAreas)
+        internal void EditorConfigure(LocationDefinition location, SlotGroup[] groups, BoxCollider[] scatterAreas, string stateKey = null)
         {
+            _stateKey = stateKey;
             _location = location;
             _groups = groups ?? Array.Empty<SlotGroup>();
             _scatterAreas = scatterAreas ?? Array.Empty<BoxCollider>();

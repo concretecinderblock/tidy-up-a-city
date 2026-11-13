@@ -33,17 +33,17 @@ namespace TidyUp.Editor
         }
 
         /// <summary>Content-only scene for the City (called by CityGreyboxBuilder).</summary>
-        public static void BuildLocationScene() => BuildScene(standalone: false);
+        public static void BuildLocationScene() => MegaBakeryBuilder.Build(); // the mega Bakery (shell + streamed rooms)
 
-        private static void BuildScene(bool standalone)
+        /// <summary>Items, memory and location asset for the Bakery, plus its palette (shared with MegaBakeryBuilder).</summary>
+        internal static LocationPalette PrepareData()
         {
-            // 1. Data (all asset work happens before NewScene, which unloads unreferenced assets)
             Dictionary<string, ItemDefinition> allItems = LocationKit.ImportItems();
             List<ItemDefinition> items = LocationKit.ItemsForLocation(allItems, "bakery");
             if (items.Count == 0)
             {
                 Debug.LogError("[Tidy Up] No items with homeLocationId 'bakery' in Data/Items/*.csv.");
-                return;
+                return null;
             }
             MemoryDefinition memory = LocationKit.LoadOrCreateMemory(MemoryAssetPath, "memory_bakery", "The Day Before",
                 "The Bakery, Old Town Market", new[]
@@ -59,9 +59,23 @@ namespace TidyUp.Editor
                 new[] { MechanicFamily.ShelfSort }, 1234, items, memory);
 
             LocationPalette p = LocationPalette.Create("Greybox",
-                floor: new Color(0.74f, 0.42f, 0.3f), wall: new Color(0.97f, 0.86f, 0.64f),
-                wood: new Color(0.6f, 0.4f, 0.24f), accent: new Color(0.2f, 0.55f, 0.56f), floorPattern: Art.TextureSet.Tiles);
+                floor: new Color(0.7f, 0.38f, 0.26f), wall: new Color(0.93f, 0.8f, 0.6f),
+                wood: new Color(0.5f, 0.3f, 0.17f), accent: new Color(0.17f, 0.45f, 0.46f), floorPattern: Art.TextureSet.Tiles);
+            p.Mood = Art.MoodPreset.Bakery;
+            p.UseRichSurfaces("Bakery",
+                Art.TextureSet.Brick, new Color(0.88f, 0.62f, 0.48f), 1.0f,           // warm brick
+                Art.TextureSet.Planks, new Color(0.56f, 0.37f, 0.22f), 2.4f,          // plank ceiling
+                Art.TextureSet.Tiles, new Color(0.7f, 0.38f, 0.26f), 1.6f,            // terracotta tiles
+                new Color(0.2f, 0.44f, 0.44f));                                       // painted teal panelling
             AssetDatabase.SaveAssets();
+            return p;
+        }
+
+        private static void BuildScene(bool standalone)
+        {
+            // 1. Data (all asset work happens before NewScene, which unloads unreferenced assets)
+            LocationPalette p = PrepareData();
+            if (p == null) return;
 
             // 2. Scene
             Scene scene = LocationKit.NewScene(withSun: standalone);
@@ -233,6 +247,9 @@ namespace TidyUp.Editor
             }
             LocationKit.MakeCleanable(LocationKit.Furniture("Table", room, new Vector3(-halfX + 1.6f, 0.375f, -halfZ + 1.4f), new Vector3(1.2f, 0.75f, 0.8f), p.Wood), "Table");
             LocationKit.BuildFlowers(decor, new Vector3(-halfX + 1.6f, 0.75f, -halfZ + 1.4f));
+            foreach (int side in new[] { -1, 1 })
+                Art.ArchitectureKit.Painting(decor, new Vector3(side * 3.6f, 2.0f, -halfZ), Quaternion.Euler(0f, 180f, 0f), new Vector2(1.2f, 0.9f),
+                    Art.ArchitectureKit.Picture.Landscape, side < 0 ? 21 : 22);   // golden-hour landscapes
             LocationKit.BuildWallSign(decor, "OPEN Sign", "OPEN", new Vector3(0f, 2.75f, halfZ - 0.04f), Quaternion.identity,
                 new Vector2(1.2f, 0.4f), p.Wood, new Color(1f, 0.55f, 0.35f), new Color(0.35f, 0.1f, 0.05f));
 

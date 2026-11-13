@@ -20,7 +20,7 @@ namespace TidyUp.Locations
                 if (_location == null) return "Door";
                 int placed = LocationStateStore.PlacedCount(_location.Id);
                 int total = _location.TotalSlots;
-                if (LocationStateStore.Get(_location.Id) == null) return $"Enter the {_location.DisplayName}";
+                if (!LocationStateStore.IsVisited(_location.Id)) return $"Enter the {_location.DisplayName}";
                 return placed >= total && total > 0
                     ? $"Enter the {_location.DisplayName}  ✓"
                     : $"Enter the {_location.DisplayName}  ·  {placed}/{total}";

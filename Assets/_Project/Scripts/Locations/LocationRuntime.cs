@@ -24,6 +24,9 @@ namespace TidyUp.Locations
         [SerializeField] private CleaningProgress _cleaning;
         [Tooltip("Where carried items are set down when the player leaves.")]
         [SerializeField] private Transform _dropPoint;
+        [Tooltip("Set when this scene is one room of a mega location (the shell's MegaLocation streams it).")]
+        [SerializeField] private string _zoneId;
+        [SerializeField] private string _zoneName;
 
         private readonly List<bool> _filled = new List<bool>();
         private bool _savedInitialState;
@@ -34,16 +37,26 @@ namespace TidyUp.Locations
         /// <summary>Cleaning goals (family K); null in a location without any.</summary>
         public CleaningProgress Cleaning => _cleaning;
         public Transform EntryPoint => _entryPoint;
+        /// <summary>The room id inside a mega location, or empty for an ordinary location.</summary>
+        public string ZoneId => _zoneId;
+        public bool IsZone => !string.IsNullOrEmpty(_zoneId);
+        /// <summary>Key for the session store: the location id, or "location/zone" for a room.</summary>
+        public string StateKey => _location == null ? string.Empty : IsZone ? MegaLocation.ZoneKey(_location.Id, _zoneId) : _location.Id;
+        /// <summary>What the HUD calls this place: the room's name inside a mega location.</summary>
+        public string DisplayName => IsZone && !string.IsNullOrEmpty(_zoneName) ? _zoneName : _location != null ? _location.DisplayName : "Location";
 
         private void OnEnable()
         {
-            GameServices.SetActiveLocation(this);
+            // A room of a mega location becomes active when the player walks into it (MegaLocation decides).
+            if (IsZone) { if (MegaLocation.Current != null) MegaLocation.Current.RegisterZone(this); }
+            else GameServices.SetActiveLocation(this);
             if (_progress != null) _progress.ProgressChanged += SaveProgress;
         }
 
         private void OnDisable()
         {
             if (_progress != null) _progress.ProgressChanged -= SaveProgress;
+            if (IsZone && MegaLocation.Current != null) MegaLocation.Current.UnregisterZone(this);
             GameServices.ClearActiveLocation(this);
         }
 
@@ -63,7 +76,7 @@ namespace TidyUp.Locations
             IReadOnlyList<ItemSlot> slots = progress.Slots;
             _filled.Clear();
             for (int i = 0; i < slots.Count; i++) _filled.Add(!slots[i].IsEmpty);
-            LocationStateStore.Save(_location.Id, _filled);
+            LocationStateStore.Save(StateKey, _filled);
         }
 
         /// <summary>Puts everything the player carries down near the door. Returns how many items.</summary>
@@ -85,7 +98,7 @@ namespace TidyUp.Locations
         }
 
         internal void EditorConfigure(LocationDefinition location, LocationProgress progress, HintService hints,
-            MuddleScatterer muddle, Transform entryPoint, Transform dropPoint, CleaningProgress cleaning = null)
+            MuddleScatterer muddle, Transform entryPoint, Transform dropPoint, CleaningProgress cleaning = null, string zoneId = null, string zoneName = null)
         {
             _location = location;
             _progress = progress;
@@ -94,6 +107,8 @@ namespace TidyUp.Locations
             _entryPoint = entryPoint;
             _dropPoint = dropPoint;
             _cleaning = cleaning;
+            _zoneId = zoneId;
+            _zoneName = zoneName;
         }
     }
 }

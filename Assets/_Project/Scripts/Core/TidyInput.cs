@@ -22,6 +22,7 @@ namespace TidyUp.Core
         public readonly InputAction Sprint;
         public readonly InputAction TidySense;
         public readonly InputAction Pause;
+        public readonly InputAction ShowMap;
 
         public TidyInput()
         {
@@ -65,6 +66,8 @@ namespace TidyUp.Core
 
             Pause = Map.AddAction("Pause", InputActionType.Button, "<Keyboard>/escape");
             Pause.AddBinding("<Gamepad>/start");
+            ShowMap = Map.AddAction("ShowMap", InputActionType.Button, "<Keyboard>/m");
+            ShowMap.AddBinding("<Gamepad>/select");
         }
 
         public void Enable() => Map.Enable();

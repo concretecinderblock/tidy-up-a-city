@@ -21,14 +21,50 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
     m_FolderGuid: 
+  - m_GUID: 5318d72b583e45a4e9c48d01173835e5
+    m_Address: Location_Bakery_shop_hall
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+    m_FolderGuid: 
   - m_GUID: 549a6bad104c4d34d8f94409910fdc59
     m_Address: Location_Bakery
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
     m_FolderGuid: 
+  - m_GUID: 791ff5de744c9794abf5e326f377248c
+    m_Address: Location_Bakery_cake_cookie
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+    m_FolderGuid: 
+  - m_GUID: 90bc36e92e68de443940361952a15bf3
+    m_Address: Location_Bakery_bakehouse
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+    m_FolderGuid: 
+  - m_GUID: 97f12ffd349f6cc4c8a53b30a4d44f1a
+    m_Address: Location_Bakery_bread_hall
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+    m_FolderGuid: 
   - m_GUID: b7f1b343b17eeaf43866bed925422127
     m_Address: Location_FantasyShop
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+    m_FolderGuid: 
+  - m_GUID: d3f678e4791a53e4eaf9c795d3b657a0
+    m_Address: Location_Bakery_pantry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+    m_FolderGuid: 
+  - m_GUID: e86b6477b2187c34b9cbb15f607c0f65
+    m_Address: Location_Bakery_pastry_salon
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

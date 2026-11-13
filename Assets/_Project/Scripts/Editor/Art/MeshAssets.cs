@@ -46,7 +46,10 @@ namespace TidyUp.Editor.Art
             mesh.name = key;
             if (existing != null)
             {
-                EditorUtility.CopySerialized(mesh, existing);
+                // Copy through the Mesh API, not CopySerialized: CopySerialized updates the asset's data but not the
+                // copy already on the GPU, so the old shape kept rendering (missing book foil, bottles without
+                // potion) until the Editor reloaded the asset. The asset keeps its GUID either way.
+                CopyInto(mesh, existing);
                 UnityEngine.Object.DestroyImmediate(mesh);
                 EditorUtility.SetDirty(existing);
                 mesh = existing;
@@ -60,5 +63,19 @@ namespace TidyUp.Editor.Art
         }
 
         private static int Mm(float metres) => Mathf.RoundToInt(metres * 1000f);
+
+        private static void CopyInto(Mesh source, Mesh target)
+        {
+            target.Clear();
+            target.indexFormat = source.indexFormat;
+            target.SetVertices(source.vertices);
+            if (source.normals.Length == source.vertexCount) target.SetNormals(source.normals);
+            if (source.tangents.Length == source.vertexCount) target.SetTangents(source.tangents);
+            if (source.uv.Length == source.vertexCount) target.SetUVs(0, source.uv);
+            if (source.colors.Length == source.vertexCount) target.SetColors(source.colors);
+            target.subMeshCount = source.subMeshCount;
+            for (int i = 0; i < source.subMeshCount; i++) target.SetTriangles(source.GetTriangles(i), i, false);
+            target.RecalculateBounds();
+        }
     }
 }

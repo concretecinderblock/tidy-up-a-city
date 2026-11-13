@@ -26,6 +26,51 @@ namespace TidyUp.Editor
     {
         public Material Floor, Wall, Ceiling, Roof, Wood, Accent, Trim, Fabric, WindowGlass, Marker, Ghost, Beacon, LampShade, BulbOn;
         public ParticleSystem Sparkle;
+        /// <summary>Interior atmosphere (lighting, haze, grade, window light). Set by the location builder.</summary>
+        public Art.MoodPreset Mood;
+        /// <summary>Set by BuildRoom.</summary>
+        public float WallHeight = 3f;
+        /// <summary>Art step 3: mouldings, pilasters, sconces (chandeliers come from BuildLamp).</summary>
+        public bool Architecture = true;
+        /// <summary>Height of a gallery deck (Library), or 0. Pilasters stop under it.</summary>
+        public float GalleryHeight;
+        /// <summary>Wood panelling on the lower walls (null: plain walls).</summary>
+        public Material Wainscot;
+        public const float WainscotHeight = 1.0f;
+        /// <summary>Centre height and size of the side-wall windows (mega locations put tall windows high, over the shelves).</summary>
+        public float WindowY = 1.65f;
+        public Vector2 WindowSize = new Vector2(1.1f, 1.3f);
+        /// <summary>Pilasters and sconces along the side walls (off where fixtures line those walls).</summary>
+        public bool WallPilasters = true;
+
+        /// <summary>
+        /// Art step 2: swaps the plain plaster room for rich surfaces: a patterned wall (damask, brick), a ceiling
+        /// (star panels, wooden planks), a floor (parquet, tiles) and panelled wood below the chair rail.
+        /// </summary>
+        public LocationPalette UseRichSurfaces(string prefix,
+            Art.TextureSet wallPattern, Color wallTint, float wallTile,
+            Art.TextureSet ceilingPattern, Color ceilingTint, float ceilingTile,
+            Art.TextureSet floorPattern, Color floorTint, float floorTile,
+            Color panelTint)
+        {
+            Wall = GreyboxAssets.Textured($"{prefix}_Wall", wallTint, wallPattern, wallTile, wallPattern == Art.TextureSet.Brick ? 0.1f : 0.18f, 1f);
+            Ceiling = GreyboxAssets.Textured($"{prefix}_Ceiling", ceilingTint, ceilingPattern, ceilingTile,
+                ceilingPattern == Art.TextureSet.StarPanels ? 0.35f : 0.3f, 1f);
+            if (ceilingPattern == Art.TextureSet.StarPanels)
+            {
+                // A painted ceiling catches bounced lamplight: let it glow faintly so the stars read in the dark.
+                Ceiling.EnableKeyword("_EMISSION");
+                Ceiling.SetTexture("_EmissionMap", Art.ProceduralTextures.Albedo(ceilingPattern));
+                Ceiling.SetColor("_EmissionColor", ceilingTint * 0.55f);
+                Ceiling.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            }
+            Floor = GreyboxAssets.Textured($"{prefix}_Floor", floorTint, floorPattern, floorTile, 0.5f);
+            Wainscot = GreyboxAssets.Textured($"{prefix}_Wainscot", panelTint, Art.TextureSet.Wainscot, WainscotHeight, 0.55f, 1f);
+            // Box UVs are centred on the box: shift half a tile so one panel sits centred in the band.
+            Wainscot.SetTextureOffset("_BaseMap", new Vector2(0.5f, 0.5f));
+            EditorUtility.SetDirty(Wainscot);
+            return this;
+        }
 
         /// <param name="prefix">Material name prefix, e.g. "Greybox" (Bakery) or "Library".</param>
         /// <param name="floorPattern">Planks, Tiles, ... (Docs/ArtBible.md: textures are tinted by palette colours).</param>
@@ -35,14 +80,14 @@ namespace TidyUp.Editor
             float floorTile = floorPattern == Art.TextureSet.Tiles ? 1.6f : 2.4f;
             return new LocationPalette
             {
-                Floor = GreyboxAssets.Textured($"{prefix}_Floor", floor, floorPattern, floorTile, 0.25f),
+                Floor = GreyboxAssets.Textured($"{prefix}_Floor", floor, floorPattern, floorTile, 0.42f), // polished: catches lamp reflections
                 Wall = GreyboxAssets.Textured($"{prefix}_Wall", wall, Art.TextureSet.Plaster, 2.5f, 0.05f, 0.6f),
                 Ceiling = GreyboxAssets.Textured($"{prefix}_Ceiling", Color.Lerp(wall, Color.white, 0.35f), Art.TextureSet.Plaster, 3f, 0.05f, 0.5f),
-                Wood = GreyboxAssets.Textured($"{prefix}_Wood", wood, Art.TextureSet.Wood, 1.2f, 0.3f),
+                Wood = GreyboxAssets.Textured($"{prefix}_Wood", wood, Art.TextureSet.Wood, 1.2f, 0.55f), // varnished
                 Accent = GreyboxAssets.Textured($"{prefix}_Accent", accent, Art.TextureSet.Plaster, 1.5f, 0.3f, 0.35f), // painted wood
-                Trim = GreyboxAssets.Textured($"{prefix}_Trim", Color.Lerp(wood, Color.white, 0.15f), Art.TextureSet.Wood, 1f, 0.35f),
+                Trim = GreyboxAssets.Textured($"{prefix}_Trim", Color.Lerp(wood, Color.white, 0.15f), Art.TextureSet.Wood, 1f, 0.55f),
                 Fabric = GreyboxAssets.Textured($"{prefix}_Fabric", accent, Art.TextureSet.Fabric, 0.5f, 0.02f),
-                WindowGlass = GreyboxAssets.Emissive("Window_Sky", new Color(0.55f, 0.68f, 0.82f), new Color(0.55f, 0.66f, 0.8f), 0.75f),
+                WindowGlass = GreyboxAssets.Emissive("Window_Sky", new Color(0.8f, 0.86f, 0.95f), new Color(0.78f, 0.86f, 1f), 1.8f), // frosty daylight that blooms
                 Roof = GreyboxAssets.Textured("Greybox_RoofTiles", Core.Palette.Terracotta, Art.TextureSet.RoofTiles, 2f, 0.2f),
                 Marker = GreyboxAssets.Lit("Greybox_SlotMarker", Color.Lerp(wood, Core.Palette.Cream, 0.35f)), // a soft mat, not a white card
                 Ghost = GreyboxAssets.TransparentUnlit("Hint_Ghost", new Color(0.75f, 0.9f, 1f, 0.28f)),
@@ -337,7 +382,9 @@ namespace TidyUp.Editor
             Shell(GreyboxAssets.Box("Wall E", room, new Vector3(hx, wallHeight * 0.5f, 0f), new Vector3(wall, wallHeight, size.y), p.Wall));
             Shell(GreyboxAssets.Box("Wall W", room, new Vector3(-hx, wallHeight * 0.5f, 0f), new Vector3(wall, wallHeight, size.y), p.Wall));
             Shell(GreyboxAssets.Box("Ceiling", room, new Vector3(0f, wallHeight + 0.1f, 0f), new Vector3(size.x + wall, 0.2f, size.y + wall), p.Ceiling));
+            p.WallHeight = wallHeight;
             BuildTrimAndWindows(room, size, wallHeight, wall, p);
+            if (p.Wainscot != null) BuildWainscot(room, size, wall, p);
 
             const float pitch = 30f;
             const float overhang = 0.35f;
@@ -353,6 +400,26 @@ namespace TidyUp.Editor
             return room;
         }
 
+        /// <summary>
+        /// Raised-panel wainscoting round the lower walls with a chair rail on top (art step 2). Thin, so fixtures
+        /// standing against the wall cover it naturally.
+        /// </summary>
+        private static void BuildWainscot(Transform room, Vector2 size, float wall, LocationPalette p)
+        {
+            var band = new GameObject("Wainscot").transform;
+            band.SetParent(room, false);
+            const float depth = 0.022f, railH = 0.06f, railD = 0.045f;
+            float h = LocationPalette.WainscotHeight;
+            float ix = size.x * 0.5f - wall * 0.5f, iz = size.y * 0.5f - wall * 0.5f;
+            foreach (int sign in new[] { -1, 1 })
+            {
+                Shell(GreyboxAssets.Box("Panels Z", band, new Vector3(0f, h * 0.5f, sign * (iz - depth * 0.5f)), new Vector3(size.x - wall, h, depth), p.Wainscot, keepCollider: false));
+                Shell(GreyboxAssets.Box("Panels X", band, new Vector3(sign * (ix - depth * 0.5f), h * 0.5f, 0f), new Vector3(depth, h, size.y - wall), p.Wainscot, keepCollider: false));
+                Shell(GreyboxAssets.Box("Chair Rail Z", band, new Vector3(0f, h + railH * 0.5f, sign * (iz - railD * 0.5f)), new Vector3(size.x - wall, railH, railD), p.Trim, keepCollider: false));
+                Shell(GreyboxAssets.Box("Chair Rail X", band, new Vector3(sign * (ix - railD * 0.5f), h + railH * 0.5f, 0f), new Vector3(railD, railH, size.y - wall), p.Trim, keepCollider: false));
+            }
+        }
+
         /// <summary>Baseboards and a cornice round the room, and framed windows (glowing sky panes) on the side walls.</summary>
         private static void BuildTrimAndWindows(Transform room, Vector2 size, float wallHeight, float wall, LocationPalette p)
         {
@@ -365,12 +432,19 @@ namespace TidyUp.Editor
             {
                 Shell(GreyboxAssets.Box("Baseboard Z", trim, new Vector3(0f, baseH * 0.5f, sign * (iz - baseD * 0.5f)), new Vector3(size.x - wall, baseH, baseD), p.Trim, keepCollider: false));
                 Shell(GreyboxAssets.Box("Baseboard X", trim, new Vector3(sign * (ix - baseD * 0.5f), baseH * 0.5f, 0f), new Vector3(baseD, baseH, size.y - wall), p.Trim, keepCollider: false));
+                if (p.Architecture)
+                {
+                    // Crown moulding: a proper profile instead of a plain strip.
+                    Art.ArchitectureKit.CrownRun(trim, new Vector3(0f, wallHeight - 0.22f, sign * iz), Quaternion.Euler(0f, sign > 0 ? 0f : 180f, 0f), size.x - wall, p.Trim);
+                    Art.ArchitectureKit.CrownRun(trim, new Vector3(sign * ix, wallHeight - 0.22f, 0f), Quaternion.Euler(0f, sign * 90f, 0f), size.y - wall, p.Trim);
+                    continue;
+                }
                 Shell(GreyboxAssets.Box("Cornice Z", trim, new Vector3(0f, wallHeight - corniceH * 0.5f, sign * (iz - corniceD * 0.5f)), new Vector3(size.x - wall, corniceH, corniceD), p.Trim, keepCollider: false));
                 Shell(GreyboxAssets.Box("Cornice X", trim, new Vector3(sign * (ix - corniceD * 0.5f), wallHeight - corniceH * 0.5f, 0f), new Vector3(corniceD, corniceH, size.y - wall), p.Trim, keepCollider: false));
             }
 
             // Windows: one every ~3 m along the east and west walls, between the walls' ends.
-            int count = Mathf.Max(1, Mathf.FloorToInt((size.y - 1f) / 3f));
+            int count = Mathf.Max(1, Mathf.FloorToInt((size.y - 1f) / Mathf.Max(3f, p.WindowSize.x + 2f)));
             for (int i = 0; i < count; i++)
             {
                 float z = Mathf.Lerp(-size.y * 0.5f, size.y * 0.5f, (i + 1f) / (count + 1f));
@@ -378,9 +452,43 @@ namespace TidyUp.Editor
                 {
                     var window = new GameObject($"Window {(sign < 0 ? "W" : "E")}{i + 1}").transform;
                     window.SetParent(trim, false);
-                    window.localPosition = new Vector3(sign * ix, 1.65f, z);
+                    window.localPosition = new Vector3(sign * ix, p.WindowY, z);
                     window.localRotation = Quaternion.Euler(0f, sign * 90f, 0f); // local -Z faces into the room (west wall: -90, east: +90)
-                    BuildWindow(window, new Vector2(1.1f, 1.3f), p);
+                    BuildWindow(window, p.WindowSize, p);
+                    if (p.Mood != null) Art.MoodAssets.AddWindowLight(window, p.WindowSize, p.Mood.WindowLight, p.Mood.WindowLightStrength);
+                }
+            }
+
+            if (!p.Architecture || !p.WallPilasters) return;
+
+            // Art step 3: pilasters with candle sconces between the windows, by the door, and sconces over the
+            // north wall's tall fixtures. Pilasters stop under a gallery when there is one.
+            float pilasterTop = p.GalleryHeight > 0f ? p.GalleryHeight : wallHeight - 0.22f;
+            var arch = new GameObject("Architecture").transform;
+            arch.SetParent(room, false);
+            for (int i = 0; i <= count; i++)
+            {
+                float z = Mathf.Lerp(-size.y * 0.5f, size.y * 0.5f, (i + 0.5f) / (count + 1f));
+                foreach (int sign in new[] { -1, 1 })
+                {
+                    Quaternion facing = Quaternion.Euler(0f, sign * 90f, 0f);
+                    Art.ArchitectureKit.Pilaster(arch, new Vector3(sign * ix, 0f, z), facing, pilasterTop, p.Wood, p.Trim);
+                    Art.ArchitectureKit.Sconce(arch, new Vector3(sign * (ix - 0.05f), 2.15f, z), facing);
+                }
+            }
+            foreach (int side in new[] { -1, 1 })
+            {
+                Quaternion southFacing = Quaternion.Euler(0f, 180f, 0f);
+                Art.ArchitectureKit.Pilaster(arch, new Vector3(side * 0.95f, 0f, -iz), southFacing, pilasterTop, p.Wood, p.Trim);
+                Art.ArchitectureKit.Sconce(arch, new Vector3(side * 0.95f, 1.95f, -iz + 0.05f), southFacing);
+            }
+            if (wallHeight >= 3.4f)
+            {
+                int northSconces = Mathf.Max(2, Mathf.RoundToInt((size.x - 2f) / 4f));
+                for (int i = 0; i < northSconces; i++)
+                {
+                    float x = Mathf.Lerp(-size.x * 0.5f + 1f, size.x * 0.5f - 1f, (i + 0.5f) / northSconces);
+                    Art.ArchitectureKit.Sconce(arch, new Vector3(x, 2.55f, iz), Quaternion.identity);
                 }
             }
         }
@@ -403,7 +511,8 @@ namespace TidyUp.Editor
 
         private static GameObject Shell(GameObject go)
         {
-            go.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+            // The shell casts shadows: the street's sun must not light the interior through walls and roof.
+            go.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
             GreyboxAssets.MarkStatic(go);
             return go;
         }
@@ -509,12 +618,37 @@ namespace TidyUp.Editor
             drop.position = new Vector3(0.9f, 0f, southWall + 0.6f);
             BuildExitDoor(rig.Systems.transform, new Vector3(0f, 0f, southWall + 0.12f), palette);
 
+            if (palette.Mood != null) Art.MoodAssets.Build(rig.Systems.transform, palette.Mood, roomSize, palette.WallHeight);
             CleaningProgress cleaning = BuildCleaning(rig.Systems, location, groups, roomSize);
             rig.Runtime = rig.Systems.AddComponent<LocationRuntime>();
             rig.Runtime.EditorConfigure(location, rig.Progress, rig.Hints, muddle, entry, drop, cleaning);
             return rig;
         }
 
+
+        /// <summary>
+        /// The systems of one room of a mega location (its own streamed scene): progress, Muddle, hints and cleaning,
+        /// all saved under "location/zone", and a LocationRuntime the shell's MegaLocation makes active when the
+        /// player walks in. No door, entry or mood: the shell owns those.
+        /// </summary>
+        public static LocationRig BuildZoneSystems(LocationDefinition location, string zoneId, string zoneName, SlotGroup[] groups,
+            BoxCollider[] scatterAreas, Rect area, LocationPalette palette)
+        {
+            string key = Locations.MegaLocation.ZoneKey(location.Id, zoneId);
+            var rig = new LocationRig { Systems = new GameObject($"Zone Systems ({zoneName})") };
+            rig.Progress = rig.Systems.AddComponent<LocationProgress>();
+            rig.Progress.EditorConfigure(location, groups);
+            MuddleScatterer muddle = rig.Systems.AddComponent<MuddleScatterer>();
+            muddle.EditorConfigure(location, groups, scatterAreas, key);
+            rig.Hints = rig.Systems.AddComponent<HintService>();
+            rig.Hints.EditorConfigure(rig.Progress, palette.Ghost);
+            var centre = new Vector3(area.center.x, 0f, area.center.y);
+            CleaningProgress cleaning = BuildCleaning(rig.Systems, location, groups, area.size, centre, key);
+            rig.Runtime = rig.Systems.AddComponent<LocationRuntime>();
+            rig.Runtime.EditorConfigure(location, rig.Progress, rig.Hints, muddle, null, null, cleaning, zoneId, zoneName);
+            rig.EntryPosition = centre;
+            return rig;
+        }
 
         // ───────────── Cleaning (family K) ─────────────
 
@@ -531,7 +665,8 @@ namespace TidyUp.Editor
         /// Builders mark extra furniture with MakeCleanable before this runs. Order is by hierarchy path, so the
         /// saved clean flags stay stable between builds.
         /// </summary>
-        private static CleaningProgress BuildCleaning(GameObject systems, LocationDefinition location, SlotGroup[] groups, Vector2 roomSize)
+        private static CleaningProgress BuildCleaning(GameObject systems, LocationDefinition location, SlotGroup[] groups, Vector2 roomSize,
+            Vector3 centre = default, string stateKey = null)
         {
             DustBunny bunny = Art.DustAssets.DustBunnyPrefab(); // fixtures are cleaned by poofing dust bunnies
             foreach (SlotGroup group in groups)
@@ -554,12 +689,12 @@ namespace TidyUp.Editor
             Material dustMaterial = Art.DustAssets.SmudgeMaterial();
             Mesh dustQuad = Art.DustAssets.FloorQuad();
             foreach (Cleanable tinted in Object.FindObjectsByType<Cleanable>(FindObjectsInactive.Include)) AddDustFilms(tinted, dustMaterial, dustQuad);
-            BuildFloorSmudges(systems.transform, location, roomSize);
+            BuildFloorSmudges(systems.transform, location, roomSize, centre, stateKey);
 
             var all = new List<Cleanable>(Object.FindObjectsByType<Cleanable>(FindObjectsInactive.Include));
             all.Sort((a, b) => string.CompareOrdinal(HierarchyPath(a.transform), HierarchyPath(b.transform)));
             CleaningProgress progress = systems.AddComponent<CleaningProgress>();
-            progress.EditorConfigure(location, all.ToArray());
+            progress.EditorConfigure(location, all.ToArray(), stateKey);
             return progress;
         }
 
@@ -595,14 +730,14 @@ namespace TidyUp.Editor
             }
         }
         /// <summary>Soft dust smudges on the floor (optional goals), seeded from the location id so builds match.</summary>
-        private static void BuildFloorSmudges(Transform parent, LocationDefinition location, Vector2 roomSize)
+        private static void BuildFloorSmudges(Transform parent, LocationDefinition location, Vector2 roomSize, Vector3 centre = default, string stateKey = null)
         {
             var root = new GameObject("Dust Smudges").transform;
             root.SetParent(parent, false);
             Material material = Art.DustAssets.SmudgeMaterial();
             Mesh quad = Art.DustAssets.FloorQuad();
             int seed = 17;
-            if (location != null) foreach (char c in location.Id) seed = seed * 31 + c;
+            if (location != null) foreach (char c in stateKey ?? location.Id) seed = seed * 31 + c;
             var random = new System.Random(seed);
             int count = Mathf.Clamp(Mathf.RoundToInt(roomSize.x * roomSize.y / 8f), 4, 12);
             float halfX = roomSize.x * 0.5f - 1f, halfZ = roomSize.y * 0.5f - 1f;
@@ -612,7 +747,7 @@ namespace TidyUp.Editor
                 go.transform.SetParent(root, false);
                 float x = Mathf.Lerp(-halfX, halfX, (float)random.NextDouble());
                 float z = Mathf.Lerp(-halfZ + 1f, halfZ, (float)random.NextDouble()); // keep clear of the door
-                go.transform.localPosition = new Vector3(x, 0.014f, z); // just above rugs
+                go.transform.localPosition = centre + new Vector3(x, 0.014f, z); // just above rugs
                 go.transform.localRotation = Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f);
                 float size = Mathf.Lerp(0.7f, 1.2f, (float)random.NextDouble());
                 go.transform.localScale = new Vector3(size, 1f, size * Mathf.Lerp(0.7f, 1f, (float)random.NextDouble()));
@@ -641,7 +776,7 @@ namespace TidyUp.Editor
             return path;
         }
         /// <summary>Door on the inside of the south wall, leading back to the street.</summary>
-        private static void BuildExitDoor(Transform parent, Vector3 floorPosition, LocationPalette p)
+        public static void BuildExitDoor(Transform parent, Vector3 floorPosition, LocationPalette p)
         {
             var root = new GameObject("Exit Door");
             root.transform.SetParent(parent, false);
@@ -765,6 +900,27 @@ namespace TidyUp.Editor
             rig.Camera.nearClipPlane = 0.05f;
             rig.Camera.fieldOfView = 70f;
             rig.Camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            var cameraData = rig.Camera.GetUniversalAdditionalCameraData();
+            cameraData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing; // clean edges on thousands of small items
+            cameraData.antialiasingQuality = AntialiasingQuality.High;
+
+            // What you carry, in your hands: drawn by an overlay camera on its own layer so it never clips into
+            // shelves or walls, on top of the main view.
+            int heldLayer = TidyLayersEditor.EnsureHeldLayer();
+            rig.Camera.cullingMask &= ~(1 << heldLayer);
+            var heldCameraGo = new GameObject("Held Items Camera");
+            heldCameraGo.transform.SetParent(cameraGo.transform, false);
+            Camera heldCamera = heldCameraGo.AddComponent<Camera>();
+            heldCamera.fieldOfView = rig.Camera.fieldOfView;
+            heldCamera.nearClipPlane = 0.02f;
+            heldCamera.farClipPlane = 4f;
+            heldCamera.cullingMask = 1 << heldLayer;
+            var heldData = heldCamera.GetUniversalAdditionalCameraData();
+            heldData.renderType = CameraRenderType.Overlay;
+            heldData.renderShadows = false;
+            heldData.renderPostProcessing = false;
+            cameraData.cameraStack.Add(heldCamera);
+            player.AddComponent<HeldItemsView>().EditorConfigure(rig.Carry, cameraGo.transform);
             cameraGo.AddComponent<AudioListener>();
 
             rig.Controller = player.AddComponent<FirstPersonController>();
@@ -813,10 +969,11 @@ namespace TidyUp.Editor
                 new Vector2(0f, 1f), new Vector2(30f, -30f), new Vector2(600f, 240f), Color.white);
             Text help = CreateText(canvasGo.transform, "Controls", font, 18, TextAnchor.UpperRight,
                 new Vector2(1f, 1f), new Vector2(-30f, -30f), new Vector2(520f, 200f), new Color(1f, 1f, 1f, 0.7f));
-            help.text = "WASD move · Shift sprint\nLMB / E  pick up · place\nQ / Tab / scroll  choose item\nG / RMB  drop · F  Tidy Sense\nEsc  menu";
+            help.text = "WASD move · Shift sprint\nLMB / E  pick up · place\nQ / Tab / scroll  choose item\nG / RMB  drop · F  Tidy Sense\nM  map · Esc  menu";
             Text sense = CreateText(canvasGo.transform, "Tidy Sense", font, 22, TextAnchor.LowerCenter,
                 new Vector2(0.5f, 0f), new Vector2(0f, 85f), new Vector2(600f, 40f), new Color(1f, 0.85f, 0.55f));
 
+            canvasGo.AddComponent<MapView>(); // building map inside mega locations (builds itself at runtime)
             HudView hud = canvasGo.AddComponent<HudView>();
             hud.EditorConfigure(rig.Interactor, rig.Carry, tidySense, rig.Memories, focus, inventory, checklist, message, sense);
             return hud;
@@ -861,16 +1018,17 @@ namespace TidyUp.Editor
         /// <summary>Hanging ceiling lamp, always on (cozy from the start). No shadows (Quest budget).</summary>
         public static void BuildLamp(string name, Transform parent, Vector3 floorPosition, float ceiling, LocationPalette p)
         {
+            // Art step 3: a brass chandelier with candles (its downlight is tuned by the location's mood).
+            if (p.Architecture)
+            {
+                Art.ArchitectureKit.Chandelier(name, parent, floorPosition, ceiling);
+                return;
+            }
             float hang = ceiling - 0.65f;
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
             root.position = new Vector3(floorPosition.x, 0f, floorPosition.z);
-
-            AddPrimitive(PrimitiveType.Cylinder, "Cord", root, new Vector3(0f, (ceiling + hang) * 0.5f, 0f),
-                new Vector3(0.015f, (ceiling - hang) * 0.5f, 0.015f), p.LampShade);
-            AddPrimitive(PrimitiveType.Cylinder, "Shade", root, new Vector3(0f, hang, 0f), new Vector3(0.36f, 0.06f, 0.36f), p.LampShade);
             AddPrimitive(PrimitiveType.Sphere, "Bulb", root, new Vector3(0f, hang - 0.08f, 0f), Vector3.one * 0.12f, p.BulbOn);
-
             var lightGo = new GameObject("Light");
             lightGo.transform.SetParent(root, false);
             lightGo.transform.localPosition = new Vector3(0f, hang - 0.15f, 0f);
@@ -879,7 +1037,6 @@ namespace TidyUp.Editor
             light.color = new Color(1f, 0.82f, 0.6f);
             light.intensity = 2.5f;
             light.range = 5f;
-            light.shadows = LightShadows.None;
         }
 
         public static GameObject BuildFlowers(Transform parent, Vector3 position)

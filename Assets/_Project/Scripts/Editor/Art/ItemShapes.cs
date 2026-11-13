@@ -26,7 +26,8 @@ namespace TidyUp.Editor.Art
         {
             var parts = new List<Part>();
             var mats = new List<Material>();
-            Material main = Lit(spec.Color, Smoothness(spec.Shape));
+            // Baked goods get a crust (mottled bake and flour flecks) in their own colour.
+            Material main = IsBaked(spec.Shape) ? Crusty(spec.Color, Smoothness(spec.Shape)) : Lit(spec.Color, Smoothness(spec.Shape));
             mats.Add(main);
             Matrix4x4 identity = Matrix4x4.identity;
 
@@ -37,7 +38,12 @@ namespace TidyUp.Editor.Art
                 case "capsule_x": parts.Add(P(MeshGen.Baguette(), identity, 0)); break;
                 case "croissant": parts.Add(P(MeshGen.Croissant(), identity, 0)); break;
                 case "egg": parts.Add(P(MeshGen.Egg(), identity, 0)); break;
-                case "crystal": parts.Add(P(MeshGen.Crystal(), identity, 0)); break;
+                case "crystal":
+                    // Art step 4: crystals glow softly from inside (bloom picks it up).
+                    main.EnableKeyword("_EMISSION");
+                    main.SetColor("_EmissionColor", spec.Color * 0.35f);
+                    parts.Add(P(MeshGen.Crystal(), identity, 0));
+                    break;
                 case "sphere": parts.Add(P(MeshGen.DeformedSphere(p => p), identity, 0)); break;
 
                 case "book":
@@ -55,24 +61,44 @@ namespace TidyUp.Editor.Art
 
                 case "book_lite":
                 {
-                    // Library-scale book (thousands on screen): one bevelled cover block and a page strip showing at
-                    // the fore-edge (+Z; the spine at -Z faces out of the shelf). About 100 triangles.
-                    mats.Add(Lit(Palette.Cream, 0.05f)); // pages
+                    // Library-scale book (thousands on screen), art step 4: a cloth cover in the kind's colour, and one
+                    // shared detail material for gold foil (front and back designs, spine bands) and the page block.
+                    // Still two draws per book. Unit space: x = thickness, y = height, z = depth; spine at -Z.
+                    mats[0] = ItemDetail.BookCover(spec.Color);
+                    mats.Add(ItemDetail.BookDetailMaterial());
                     parts.Add(P(MeshGen.RoundedBox(Vector3.one, 0.06f, 1), identity, 0));
-                    parts.Add(P(MeshGen.RoundedBox(new Vector3(0.84f, 0.92f, 0.1f), 0.01f, 1), Matrix4x4.Translate(new Vector3(0f, 0f, 0.46f)), 1));
+                    Mesh pages = MeshGen.RoundedBox(new Vector3(0.84f, 0.92f, 0.1f), 0.01f, 1);
+                    PaintCell(pages, 3); // all of it reads the cream page cell
+                    parts.Add(P(pages, Matrix4x4.Translate(new Vector3(0f, 0f, 0.46f)), 1));
+                    int stable = 0;
+                    foreach (char ch in id) stable = stable * 31 + ch;
+                    int design = (stable & 1) == 0 ? 0 : 1;
+                    const float lift = 0.035f; // off the cover in unit space (≈1 mm on a 3 cm book), no z-fighting
+                    parts.Add(P(CellQuad(design, new Vector3(0.5f + lift, 0f, 0.02f), Vector3.forward * 0.84f, Vector3.up * 0.9f, Vector3.right), identity, 1));
+                    parts.Add(P(CellQuad(design, new Vector3(-0.5f - lift, 0f, 0.02f), Vector3.back * 0.84f, Vector3.up * 0.9f, Vector3.left), identity, 1));
+                    parts.Add(P(CellQuad(2, new Vector3(0f, 0f, -0.5f - 0.02f), Vector3.right * 0.8f, Vector3.up * 0.94f, Vector3.back), identity, 1));
                     break;
                 }
 
                 case "bottle":
                 {
-                    mats[0] = Lit(spec.Color, 0.85f); // glassy
+                    // Art step 4: clear glass with the coloured potion inside (filled two thirds), and a cork.
+                    mats[0] = ItemDetail.Glass();
+                    Material liquid = Lit(spec.Color, 0.7f);
+                    liquid.EnableKeyword("_EMISSION");
+                    liquid.SetColor("_EmissionColor", spec.Color * 0.25f); // potions glow a little
+                    mats.Add(liquid);
                     mats.Add(Lit(Palette.Walnut, 0.2f)); // cork
                     parts.Add(P(MeshGen.Lathe(new[]
                     {
                         V(0f, 0f), V(0.4f, 0f), V(0.5f, 0.06f), V(0.5f, 0.55f), V(0.42f, 0.68f), V(0.2f, 0.76f),
                         V(0.16f, 0.86f), V(0.19f, 0.9f), V(0.16f, 0.93f), V(0f, 0.93f),
                     }, 20, "Bottle"), identity, 0));
-                    parts.Add(P(MeshGen.Lathe(new[] { V(0f, 0.9f), V(0.14f, 0.9f), V(0.15f, 1f), V(0f, 1f) }, 12, "Cork"), identity, 1));
+                    parts.Add(P(MeshGen.Lathe(new[]
+                    {
+                        V(0f, 0.03f), V(0.38f, 0.03f), V(0.45f, 0.08f), V(0.45f, 0.52f), V(0.4f, 0.58f), V(0f, 0.58f),
+                    }, 16, "Potion"), identity, 1));
+                    parts.Add(P(MeshGen.Lathe(new[] { V(0f, 0.9f), V(0.14f, 0.9f), V(0.15f, 1f), V(0f, 1f) }, 12, "Cork"), identity, 2));
                     break;
                 }
 
@@ -208,6 +234,50 @@ namespace TidyUp.Editor.Art
 
         private static Part P(Mesh mesh, Matrix4x4 transform, int material) => new Part { Mesh = mesh, Transform = transform, Material = material };
         private static Vector2 V(float radius, float height) => new Vector2(radius, height);
+
+        private static bool IsBaked(string shape)
+        {
+            switch (shape)
+            {
+                case "loaf": case "baguette": case "croissant": case "bun": case "bagel": case "cookie": case "pie": return true;
+                default: return false;
+            }
+        }
+
+        private static Material Crusty(Color color, float smoothness)
+        {
+            Material material = GreyboxAssets.Lit("Item_" + ColorUtility.ToHtmlStringRGB(color) + "_crust", color);
+            material.SetTexture("_BaseMap", ItemDetail.Crust());
+            material.SetTextureScale("_BaseMap", new Vector2(2f, 2f));
+            material.SetFloat("_Smoothness", smoothness);
+            UnityEditor.EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        /// <summary>Points every UV of a mesh at the middle of one detail-atlas cell (a solid patch, e.g. pages).</summary>
+        private static void PaintCell(Mesh mesh, int cell)
+        {
+            Vector2 centre = ItemDetail.CellMin(cell) + Vector2.one * ItemDetail.CellSize * 0.5f;
+            var uvs = new Vector2[mesh.vertexCount];
+            for (int i = 0; i < uvs.Length; i++) uvs[i] = centre;
+            mesh.uv = uvs;
+        }
+
+        /// <summary>A flat quad showing one detail-atlas cell, facing normal; right and up are its full edges.</summary>
+        private static Mesh CellQuad(int cell, Vector3 centre, Vector3 right, Vector3 up, Vector3 normal)
+        {
+            Vector2 min = ItemDetail.CellMin(cell) + Vector2.one * 0.004f;
+            Vector2 max = ItemDetail.CellMin(cell) + Vector2.one * (ItemDetail.CellSize - 0.004f);
+            var mesh = new Mesh { name = "CellQuad" };
+            mesh.vertices = new[] { centre - right * 0.5f - up * 0.5f, centre + right * 0.5f - up * 0.5f, centre + right * 0.5f + up * 0.5f, centre - right * 0.5f + up * 0.5f };
+            mesh.uv = new[] { new Vector2(min.x, min.y), new Vector2(max.x, min.y), new Vector2(max.x, max.y), new Vector2(min.x, max.y) };
+            mesh.normals = new[] { normal, normal, normal, normal };
+            // Wind so the front faces along normal.
+            Vector3 n = Vector3.Cross(right, up);
+            mesh.triangles = Vector3.Dot(n, normal) >= 0f ? new[] { 0, 1, 2, 0, 2, 3 } : new[] { 0, 2, 1, 0, 3, 2 };
+            mesh.RecalculateBounds();
+            return mesh;
+        }
 
         /// <summary>
         /// A circle in (radius, height), counter-clockwise from its lowest point, for lathing a torus (bagel,

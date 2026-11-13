@@ -24,6 +24,8 @@ namespace TidyUp.Core
         public bool InteractHeld { get; private set; }
         public bool DropPressed { get; private set; }
         public bool TidySensePressed { get; private set; }
+        /// <summary>Open or close the building map (M / gamepad Back).</summary>
+        public bool MapPressed { get; private set; }
         /// <summary>-1, 0 or +1 this frame.</summary>
         public int CycleDirection { get; private set; }
         public bool HasFocus => Cursor.lockState == CursorLockMode.Locked;
@@ -100,6 +102,7 @@ namespace TidyUp.Core
             InteractPressed = _input.Interact.WasPressedThisFrame();
             DropPressed = _input.Drop.WasPressedThisFrame();
             TidySensePressed = _input.TidySense.WasPressedThisFrame();
+            MapPressed = _input.ShowMap.WasPressedThisFrame();
 
             int cycle = 0;
             if (_input.CycleNext.WasPressedThisFrame()) cycle++;
@@ -120,6 +123,7 @@ namespace TidyUp.Core
             InteractHeld = false;
             DropPressed = false;
             TidySensePressed = false;
+            MapPressed = false;
             CycleDirection = 0;
             ConfirmPressed = false;
             CancelPressed = false;

@@ -13,6 +13,8 @@ namespace TidyUp.Locations
     public sealed class RestorationController : MonoBehaviour
     {
         [SerializeField] private LocationProgress _progress;
+        [Tooltip("For a mega location: follow the grand total over all its rooms instead.")]
+        [SerializeField] private MegaLocation _mega;
         [SerializeField] private FeedbackService _feedback;
         [SerializeField] private RestorationStage[] _stages = Array.Empty<RestorationStage>();
 
@@ -26,8 +28,8 @@ namespace TidyUp.Locations
 
         private void Update()
         {
-            if (_progress == null) return;
-            float target = _progress.CompletionRatio;
+            if (_progress == null && _mega == null) return;
+            float target = _mega != null ? _mega.CompletionRatio : _progress.CompletionRatio;
             if (target == _applied) return;
 
             // First frame (after the Muddle scattered in Start): show the current state without fanfare.
@@ -55,9 +57,10 @@ namespace TidyUp.Locations
             RestorationChanged?.Invoke(_applied);
         }
 
-        internal void EditorConfigure(LocationProgress progress, FeedbackService feedback, RestorationStage[] stages)
+        internal void EditorConfigure(LocationProgress progress, FeedbackService feedback, RestorationStage[] stages, MegaLocation mega = null)
         {
             _progress = progress;
+            _mega = mega;
             _feedback = feedback;
             _stages = stages ?? Array.Empty<RestorationStage>();
         }

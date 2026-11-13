@@ -25,7 +25,8 @@ namespace TidyUp.Editor
         public const string LocationScenePath = "Assets/_Project/Scenes/Locations/Library.unity";
         private const string TestScenePath = "Assets/_Project/Scenes/Test/Library_Greybox.unity";
         private const string MemoryAssetPath = "Assets/_Project/Data/Story/Library_Memory.asset";
-        private const float WallHeight = 3.8f;
+        private const float WallHeight = 6.4f;   // two storeys: a gallery runs round three walls at GalleryHeight
+        private const float GalleryHeight = 3.0f;
         private const int BooksPerShelf = 10;
         private static readonly Vector2 RoomSize = new Vector2(20f, 16f);
 
@@ -74,8 +75,14 @@ namespace TidyUp.Editor
                 new[] { MechanicFamily.OrderedSort }, 2024, items, memory);
 
             LocationPalette p = LocationPalette.Create("Library",
-                floor: new Color(0.62f, 0.42f, 0.26f), wall: new Color(0.93f, 0.89f, 0.78f),
-                wood: new Color(0.42f, 0.26f, 0.16f), accent: new Color(0.24f, 0.4f, 0.3f));
+                floor: new Color(0.5f, 0.3f, 0.18f), wall: new Color(0.3f, 0.37f, 0.24f),   // deep green walls, mahogany
+                wood: new Color(0.42f, 0.19f, 0.1f), accent: new Color(0.42f, 0.19f, 0.1f));
+            p.Mood = Art.MoodPreset.Library;
+            p.UseRichSurfaces("Library",
+                Art.TextureSet.Damask, new Color(0.32f, 0.39f, 0.25f), 0.7f,          // green damask
+                Art.TextureSet.StarPanels, Color.white, 2.0f,                          // starry coffered ceiling
+                Art.TextureSet.Parquet, new Color(0.55f, 0.33f, 0.2f), 1.6f,          // parquet
+                new Color(0.42f, 0.19f, 0.1f));                                       // mahogany panelling
             // Filler books share the novels' materials (same "Item_<hex>" names as the generated item prefabs).
             string[] fillerHex = { "8E3B46", "2E5E4E", "3B5B92", "C9A227", "6B4E71", "B5651D", "1F3A5F" };
             var filler = new Material[fillerHex.Length];
@@ -90,7 +97,9 @@ namespace TidyUp.Editor
             Scene scene = LocationKit.NewScene(withSun: standalone);
             LocationDefinition location = AssetDatabase.LoadAssetAtPath<LocationDefinition>(LocationAssetPath);
 
+            p.GalleryHeight = GalleryHeight;
             Transform room = LocationKit.BuildRoom("Library Room", RoomSize, WallHeight, p);
+            Art.ArchitectureKit.Gallery(room, RoomSize, 0.2f, GalleryHeight, WallHeight, p.Wood, p.Trim, filler);
             BuildFurniture(room, p);
 
             float halfX = RoomSize.x * 0.5f - 0.1f; // inner wall faces
@@ -223,7 +232,10 @@ namespace TidyUp.Editor
             {
                 LocationKit.BuildLamp($"Lamp {++lamp}", decor, new Vector3(lx, 0f, lz), WallHeight, p);
             }
-            LocationKit.BuildWallSign(decor, "Library Sign", "LIBRARY", new Vector3(0f, 2.95f, halfZ - 0.04f), Quaternion.identity,
+            foreach (int wallSide in new[] { -1, 1 })
+                Art.ArchitectureKit.Painting(decor, new Vector3(wallSide * 3.6f, 2.0f, -halfZ), Quaternion.Euler(0f, 180f, 0f), new Vector2(1.2f, 0.9f),
+                    Art.ArchitectureKit.Picture.Map, wallSide < 0 ? 11 : 12);   // framed city maps, like the reference
+            LocationKit.BuildWallSign(decor, "Library Sign", "LIBRARY", new Vector3(0f, 2.55f, halfZ - 0.04f), Quaternion.identity,
                 new Vector2(1.6f, 0.36f), p.Wood, new Color(1f, 0.85f, 0.55f), new Color(0.25f, 0.15f, 0.08f));
             LocationKit.BuildFlowers(decor, new Vector3(5.4f, 0.75f, -3.2f));
 

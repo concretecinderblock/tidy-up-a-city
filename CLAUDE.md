@@ -7,7 +7,7 @@ Full game design document: https://claude.ai/artifact/8rdqXTb12LNEBcQtFkmBJ9 (mi
 
 ## 1. The game in one paragraph
 
-**Tidy Up a City** is a cozy open-world sorting game. A mysterious event, **The Great Muddle**, scattered thousands of items across a city of 60 locations in 10 districts. The player visits each location, finds misplaced items, picks them up (max 10 at a time), and snaps them back into their correct slot. Every correct placement gives instant feedback: an alignment tone, a haptic tick and a subtle sparkle. Locations are warm, lit and colourful from the start: it's a cozy game about helping a city and must never feel depressing. As locations are restored, NPCs and music return, and memory fragments reveal what caused the Muddle. No fail states, no timers in the main mode.
+**Tidy Up a City** is a cozy open-world sorting game. A mysterious event, **The Great Muddle**, scattered thousands of items across a **mega town** of 60 locations in 10 districts (a town, not a modern city; every location is a mega place, big inside and out: Jesse, 2026-11-13). The player visits each location, finds misplaced items, picks them up (max 10 at a time), and snaps them back into their correct slot. Every correct placement gives instant feedback: an alignment tone, a haptic tick and a subtle sparkle. Locations are warm, lit and colourful from the start: it's a cozy game about helping a city and must never feel depressing. As locations are restored, NPCs and music return, and memory fragments reveal what caused the Muddle. No fail states, no timers in the main mode.
 
 ## 2. Current milestone: vertical slice
 
@@ -46,7 +46,7 @@ If you think something here is wrong, say so and explain; don't silently switch 
 - Same seed = same mess. Save the seed plus player progress, not every item transform.
 
 ### Locations are instanced
-- A persistent `City` scene (streets, map, player, managers) plus one additive scene per location.
+- A persistent `City` scene (streets, map, player, managers) plus, per location, a **shell scene** (the building, loaded on entry) and **zone scenes** (its rooms) that stream in and out as the player moves (`MegaLocation`). Every zone counts towards the location's grand total; each item kind lives in one zone. A building map (corner minimap + full map on M) guides the player. (Mega locations, 2026-11-13.)
 - Entering a location loads its scene; leaving unloads it.
 - **Hard-binding:** a location only spawns its own items. Items can never physically leave their location.
 - **City Post exception:** "stray" items are dropped in a Lost & Found box, stored as data (item id + target location), and spawn as a delivery task at their true location. Never move GameObjects between scenes.
@@ -134,7 +134,7 @@ Docs/
 
 ## 9. Performance budget (per location, PC baseline)
 
-- 3,000–5,000 items per location, slice locations included (Jesse, 2026-11-10)
+- Mega locations: ~10,000+ items per location over streamed rooms of ~1,500–2,500 items each; only the rooms near the player are loaded (Jesse, 2026-11-13; was 3,000–5,000 per location)
 - Loose items rest kinematic (no simulation) until the player touches them; ghosts and living behaviour only near the player
 - Use GPU instancing / SRP Batcher-friendly materials; share materials across items
 - Items far from the player: no physics, no Update; activate on proximity
@@ -145,7 +145,7 @@ Docs/
 
 - Work in small, testable steps. After each step: what changed, how to test it in the Editor, what's next.
 - Before large refactors or new packages: explain the plan and wait for approval.
-- Look: procedural storybook style, all in-house (generated rounded meshes, generated textures with normal maps, one palette; see `Docs/ArtBible.md`). Real models can replace any item later through the CSV `prefab` column. (Was "grey-box only during the slice"; changed by Jesse 2026-11-10.)
+- Look: warm, semi-realistic interiors, aiming as close as possible to the reference screenshots (grand wooden library, museum hall: glossy varnished wood, rich materials, detailed architecture, warm lamplight, haze, bloom), made entirely in-house with no bought or downloaded assets (generated meshes and textures; see `Docs/ArtBible.md`). Real models can still replace any item later through the CSV `prefab` column. (Was "procedural storybook style"; changed by Lowie 2026-11-12.)
 - Log architecture decisions in `Docs/DECISIONS.md` (date, decision, why).
 - If a request conflicts with this file or the GDD, point it out.
 
