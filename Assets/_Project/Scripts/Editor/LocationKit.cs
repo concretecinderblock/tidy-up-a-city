@@ -747,7 +747,7 @@ namespace TidyUp.Editor
                 go.transform.SetParent(root, false);
                 float x = Mathf.Lerp(-halfX, halfX, (float)random.NextDouble());
                 float z = Mathf.Lerp(-halfZ + 1f, halfZ, (float)random.NextDouble()); // keep clear of the door
-                go.transform.localPosition = centre + new Vector3(x, 0.014f, z); // just above rugs
+                go.transform.localPosition = centre + new Vector3(x, 0.026f, z); // above rugs and their borders (no flicker)
                 go.transform.localRotation = Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f);
                 float size = Mathf.Lerp(0.7f, 1.2f, (float)random.NextDouble());
                 go.transform.localScale = new Vector3(size, 1f, size * Mathf.Lerp(0.7f, 1f, (float)random.NextDouble()));

@@ -114,6 +114,9 @@ namespace TidyUp.Editor
                 BoxCollider scatter = LocationKit.BuildScatterArea(new Vector3(spec.Centre.x, 0.7f, spec.Centre.y), new Vector3(18.6f, 1.4f, 18.6f));
                 SlotGroup[] groups = room.Groups.ToArray();
                 LocationKit.BuildZoneSystems(room.Location, spec.Id, spec.Name, groups, new[] { scatter }, spec.Area, p);
+                // The mess stays out of the decorations (no items inside sacks, cakes or plants, or in the ovens).
+                var muddle = UnityEngine.Object.FindFirstObjectByType<Muddle.MuddleScatterer>();
+                if (muddle != null) muddle.EditorSetKeepClear(KeepClear(room, spec));
                 int slots = 0;
                 foreach (SlotGroup g in groups) slots += g.Slots.Length;
                 grandTotal += slots;
@@ -132,6 +135,39 @@ namespace TidyUp.Editor
             Debug.Log($"[Tidy Up] Built the mega Bakery: {Zones.Length} rooms, {grandTotal} slots.");
         }
 
+
+        /// <summary>
+        /// Where the Muddle mustn't drop items in a room: around every standing decoration (rugs excepted, hanging
+        /// things don't count), and the ovens, which belong to the shell.
+        /// </summary>
+        private static Bounds[] KeepClear(Room room, ZoneSpec spec)
+        {
+            var result = new List<Bounds>();
+            foreach (Transform child in room.Decor)
+            {
+                if (child.name.StartsWith("Rug")) continue;
+                bool any = false;
+                var b = new Bounds();
+                foreach (Renderer renderer in child.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (!any) b = renderer.bounds; else b.Encapsulate(renderer.bounds);
+                    any = true;
+                }
+                foreach (Collider collider in child.GetComponentsInChildren<Collider>(true))
+                {
+                    if (!any) b = collider.bounds; else b.Encapsulate(collider.bounds);
+                    any = true;
+                }
+                if (!any || b.min.y > 1f) continue; // hanging pans and herbs leave the floor free
+                b.Expand(new Vector3(0.2f, 0f, 0.2f));
+                result.Add(b);
+            }
+            if (spec.Id == "bakehouse")
+                foreach (float z in OvenZ) result.Add(new Bounds(new Vector3(28.9f, 1.5f, z), new Vector3(2.8f, 3f, 3.8f)));
+            return result.ToArray();
+        }
+
+        private static readonly float[] OvenZ = { 4f, 9.5f, 15f };
         // ───────────── Rooms ─────────────
 
         private enum Wall { N, S, E, W }
@@ -268,8 +304,7 @@ namespace TidyUp.Editor
             foreach (int side in new[] { -1, 1 })
             {
                 Plant(r, side * 9f, -9f, 1.4f);
-                Chalkboard(r, side * 1.9f, -8.6f, side * 15f);
-                LocationKit.BuildFlowers(r.Decor, r.World(side * 5.6f, 1.5f) + new Vector3(0f, 1.42f, 0f));
+                Chalkboard(r, side * 1.9f, -8.6f, 180f + side * 15f); // by the street door, facing into the hall
             }
         }
 
@@ -457,7 +492,8 @@ namespace TidyUp.Editor
             var root = new GameObject("Chalkboard").transform;
             root.SetParent(r.Decor, false);
             root.SetPositionAndRotation(r.World(x, z), Quaternion.Euler(0f, yaw, 0f));
-            GameObject board = LocationKit.Furniture("Board", root, root.position + new Vector3(0f, 0.75f, 0f), new Vector3(0.75f, 1.1f, 0.05f), DecorMat("Chalk", new Color(0.12f, 0.16f, 0.14f)));
+            // Furniture takes a position local to its parent: the board sits on the easel, not at twice the distance.
+            GameObject board = LocationKit.Furniture("Board", root, new Vector3(0f, 0.75f, 0f), new Vector3(0.75f, 1.1f, 0.05f), DecorMat("Chalk", new Color(0.12f, 0.16f, 0.14f)));
             board.transform.localRotation = Quaternion.Euler(-10f, 0f, 0f);
             LocationKit.BuildWallSign(root, "Chalk Text", "FRESH\nTODAY", root.TransformPoint(new Vector3(0f, 0.85f, -0.05f)), root.rotation * Quaternion.Euler(-10f, 0f, 0f),
                 new Vector2(0.6f, 0.5f), r.P.Wood, new Color(0.14f, 0.18f, 0.16f), new Color(0.95f, 0.93f, 0.85f));
@@ -619,7 +655,7 @@ namespace TidyUp.Editor
             Material brick = GreyboxAssets.Textured("Bakery_OvenBrick", new Color(0.78f, 0.5f, 0.38f), Art.TextureSet.Brick, 1f, 0.1f);
             Material fire = GreyboxAssets.Emissive("Bakery_OvenFire", new Color(1f, 0.55f, 0.2f), new Color(1f, 0.45f, 0.12f), 4f);
             Material iron = GreyboxAssets.Lit("Bakery_Iron", new Color(0.16f, 0.15f, 0.14f));
-            foreach (float z in new[] { 4f, 9.5f, 15f })
+            foreach (float z in OvenZ)
             {
                 var oven = new GameObject("Oven").transform;
                 oven.SetParent(decor, false);

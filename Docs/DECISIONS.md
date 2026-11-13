@@ -276,3 +276,8 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
     - the building: ceiling beams, a painted frieze along the partitions, paintings beside every doorway
     - the rooms: rugs, potted plants, chalkboards, a wedding cake centrepiece, a harvest table, barrels and crates, flour sacks, copper pans over the workbenches, dried herbs in the pantry
   - **Cost (Editor):** 5–11 ms per frame with 3–4 rooms loaded, peaking at 27k draw calls. Batching the loose items (instanced rendering or merged static meshes for slotted items) is the next performance step before more mega locations.
+- **Visual fixes (same day):**
+  - Two flower pots in the Shop Hall floated where islands used to be; removed.
+  - The chalkboards' boards were placed with world coordinates under an offset parent (black rectangles far from their easels); the ones by the street door also faced the wall.
+  - Dust patches sat exactly level with the rug borders and flickered; raised to 0.026 m.
+  - The Muddle now keeps out of decorations: `MuddleScatterer` has keep-clear bounds (built per room from the standing decor, plus the ovens), so no items end up inside sacks, cakes, plants or ovens.

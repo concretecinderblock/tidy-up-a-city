@@ -28,6 +28,8 @@ namespace TidyUp.Muddle
         [SerializeField] private SlotGroup[] _groups = Array.Empty<SlotGroup>();
         [SerializeField] private BoxCollider[] _scatterAreas = Array.Empty<BoxCollider>();
         [SerializeField] private LayerMask _surfaceMask = ~(1 << 2); // everything except Ignore Raycast
+        [Tooltip("Areas the mess stays out of (decorations, ovens): world bounds, checked in XZ.")]
+        [SerializeField] private Bounds[] _keepClear = Array.Empty<Bounds>();
 
         private const int Attempts = 12;
         private readonly ScatterGrid _grid = new ScatterGrid(0.5f);
@@ -160,7 +162,8 @@ namespace TidyUp.Muddle
             int mask = TidyLayers.WithoutItems(_surfaceMask); // never land on other items
             if (Physics.Raycast(top, Vector3.down, out RaycastHit hit, castLength, mask, QueryTriggerInteraction.Ignore)
                 && hit.normal.y > 0.8f
-                && hit.collider.GetComponentInParent<SlotGroup>() == null) // not on or inside a fixture
+                && hit.collider.GetComponentInParent<SlotGroup>() == null // not on or inside a fixture
+                && !InKeepClear(hit.point))                                // not inside a decoration
             {
                 point = hit.point;
                 return true;
@@ -169,6 +172,18 @@ namespace TidyUp.Muddle
             return false;
         }
 
+
+        private bool InKeepClear(Vector3 p)
+        {
+            for (int i = 0; i < _keepClear.Length; i++)
+            {
+                Bounds b = _keepClear[i];
+                if (p.x >= b.min.x && p.x <= b.max.x && p.z >= b.min.z && p.z <= b.max.z && p.y <= b.max.y) return true;
+            }
+            return false;
+        }
+
+        internal void EditorSetKeepClear(Bounds[] keepClear) => _keepClear = keepClear ?? Array.Empty<Bounds>();
         /// <summary>Moves the item up or down so its visual bottom sits on the given height.</summary>
         private static void RestOn(TidyItem item, float surfaceY)
         {
