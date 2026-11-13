@@ -269,3 +269,10 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - the street now runs on to it; the old bakery's spot is a townhouse, and the clock tower moved to the side of the square
 - **Cost (Editor):** 5–8 ms per frame. Draw calls run 10–16 k with 3–4 rooms loaded, so batching items is the next performance step.
 - **Fix (same day):** the street's extension toward the Grand Bakery (x -23 to -29.5) was a visual slab without a collider, so walking to the Bakery dropped the player into the void. It's walkable now; a raycast sweep along the whole walk finds solid ground. Safety net: `FirstPersonController` remembers the last solid ground and puts the player back there if they ever fall below y = -25 (and logs a warning, so any new gap shows up).
+- **Bigger fixtures and more decor (same day; Jesse: "the cabinets are too tiny … fill the building with more decorations or space to store items"):**
+  - Fixtures are sized for the 6 m halls: glass counters on 0.6 m bases, loaf walls and cabinets with about 2 m of reachable shelves and stocked shelves above to about 4 m, roll trolleys and bread racks about 2 m tall. Islands fill the empty floor.
+  - The Bakery now holds **19,965 items** (3.0–3.8k per room).
+  - Decor:
+    - the building: ceiling beams, a painted frieze along the partitions, paintings beside every doorway
+    - the rooms: rugs, potted plants, chalkboards, a wedding cake centrepiece, a harvest table, barrels and crates, flour sacks, copper pans over the workbenches, dried herbs in the pantry
+  - **Cost (Editor):** 5–11 ms per frame with 3–4 rooms loaded, peaking at 27k draw calls. Batching the loose items (instanced rendering or merged static meshes for slotted items) is the next performance step before more mega locations.

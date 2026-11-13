@@ -45,6 +45,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ce526a0480ed7d641ba69421dbbc91fc, type: 2}
   - {fileID: 11400000, guid: e9f8aba4092b88e42931d4e8e0e3273d, type: 2}
   _memory: {fileID: 11400000, guid: 389be551a6b46064cace541897d6c564, type: 2}
-  _totalSlots: 11060
+  _totalSlots: 19965
   _muddleSeed: 1234
   _muddleFraction: 1

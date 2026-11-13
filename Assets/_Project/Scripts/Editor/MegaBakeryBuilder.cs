@@ -235,90 +235,106 @@ namespace TidyUp.Editor
         private static readonly string[] SmallKinds = { "small_muffin", "small_cupcake", "small_donut", "small_macaron" };
         private static readonly string[] SmallNames = { "Muffins", "Cupcakes", "Donuts", "Macarons" };
 
-        /// <summary>The front room: glass cases of little cakes in islands, wall cases, pie stands by the street door.</summary>
+        // Fixtures are sized for 6 m halls (Jesse 2026-11-13: "the cabinets are too tiny"): glass cases stand on tall
+        // counters, wall cabinets reach about 2 m of reachable shelves with stocked shelves above to about 4 m.
+
+        /// <summary>The front room: big glass cake counters in islands, tall cake cabinets, pie stands, a wedding cake.</summary>
         private static void BuildShopHall(Room r)
         {
-            ShelfSettings IslandCase(int k, int side) => Make(r, $"Case {SmallNames[k]} {side}", "Cake case", ShelfStyle.Case, 3, 22, 3,
-                new Vector3(0.11f, 0.13f, 0.11f), new[] { SmallKinds[k] }, new[] { SmallNames[k] }, 0.45f);
+            ShelfSettings IslandCase(int k, int side) => Make(r, $"Case {SmallNames[k]} {side}", "Cake case", ShelfStyle.Case, 4, 26, 3,
+                new Vector3(0.11f, 0.13f, 0.11f), new[] { SmallKinds[k] }, new[] { SmallNames[k] }, 0.6f);
             int island = 0;
-            foreach (float z in new[] { 3.5f, -2.5f })
-            foreach (float x in new[] { -5.5f, 5.5f })
+            foreach (float z in new[] { 4.5f, -1.5f })
+            foreach (float x in new[] { -5.6f, 5.6f })
             {
-                r.Island(x, z, IslandCase(island, 1), IslandCase(island, 2));
+                r.Island(x, z, IslandCase(island % 4, 1), IslandCase(island % 4, 2));
                 island++;
             }
-            ShelfSettings WallCase(int i) => Make(r, $"Wall Case {SmallNames[i % 4]}", "Cake case", ShelfStyle.Case, 3, 16, 2,
-                new Vector3(0.11f, 0.13f, 0.11f), new[] { SmallKinds[i % 4] }, new[] { SmallNames[i % 4] }, 0.45f);
-            r.Row(Wall.W, -9.2f, 0.6f, 3, WallCase);
-            r.Row(Wall.E, -0.4f, 8.8f, 4, i => Tall(Make(r, $"Cake Shelf {SmallNames[(i + 2) % 4]}", "Cake shelf", ShelfStyle.Bookcase, 5, 12, 1,
-                new Vector3(0.14f, 0.16f, 0.14f), new[] { SmallKinds[(i + 2) % 4] }, new[] { SmallNames[(i + 2) % 4] })));
+            ShelfSettings Cabinet(int i) => Tall(Make(r, $"Cake Cabinet {SmallNames[i % 4]}", "Cake cabinet", ShelfStyle.Bookcase, 6, 14, 2,
+                new Vector3(0.14f, 0.16f, 0.14f), new[] { SmallKinds[i % 4] }, new[] { SmallNames[i % 4] }, 0.35f), 4.1f);
+            r.Row(Wall.W, -9.2f, 0.6f, 4, Cabinet);
+            r.Row(Wall.E, -0.4f, 8.8f, 3, i => Cabinet(i + 2));
 
-            float[] standX = { -8f, -5.5f, -3f, 3f, 5.5f, 8f };
+            float[] standX = { -8f, -5.2f, -2.6f, 2.6f, 5.2f, 8f };
             for (int i = 0; i < standX.Length; i++)
                 r.Stand(new StandSettings
                 {
-                    Name = $"Pie Stand {i + 1}", Label = "Pie stand", SlotsPerTier = new[] { 8, 6, 4 }, SlotSize = new Vector3(0.26f, 0.1f, 0.26f),
+                    Name = $"Pie Stand {i + 1}", Label = "Pie stand", SlotsPerTier = new[] { 12, 9, 6 }, SlotSize = new Vector3(0.26f, 0.1f, 0.26f),
                     TierSlotTypes = new[] { "big_pie" }, TierLabels = new[] { "Apple pies" }, FrameMaterial = r.P.Wood, MarkerMaterial = r.P.Marker,
-                }, standX[i], -7f);
-            foreach (float x in new[] { -5.5f, 5.5f })
-                LocationKit.BuildFlowers(r.Decor, r.World(x, 0.5f) + new Vector3(0f, 0.92f, 0f));
+                }, standX[i], -7.2f);
+
+            WeddingCake(r, 0f, 1.5f);
+            Rug(r, 0f, -4f, new Vector2(3f, 9f), new Color(0.55f, 0.18f, 0.2f));
+            foreach (int side in new[] { -1, 1 })
+            {
+                Plant(r, side * 9f, -9f, 1.4f);
+                Chalkboard(r, side * 1.9f, -8.6f, side * 15f);
+                LocationKit.BuildFlowers(r.Decor, r.World(side * 5.6f, 1.5f) + new Vector3(0f, 1.42f, 0f));
+            }
         }
 
         private static readonly string[] LoafKinds = { "loaf_sourdough", "loaf_rye", "loaf_seeded", "loaf_brioche" };
         private static readonly string[] LoafNames = { "Sourdough", "Rye", "Seeded", "Brioche" };
 
-        /// <summary>Towering loaf walls all round, and islands of baguette and baton racks down the middle.</summary>
+        /// <summary>Towering loaf walls all round, islands of tall bread racks, a harvest table in the middle.</summary>
         private static void BuildBreadHall(Room r)
         {
             int n = 0;
             ShelfSettings Loaf(int i)
             {
                 int k = n++ % 4;
-                return Tall(Make(r, $"Loaf Wall {LoafNames[k]}", $"{LoafNames[k]} wall", ShelfStyle.Bookcase, 6, 10, 2,
-                    new Vector3(0.3f, 0.2f, 0.22f), new[] { LoafKinds[k] }, new[] { LoafNames[k] }));
+                return Tall(Make(r, $"Loaf Wall {LoafNames[k]}", $"{LoafNames[k]} wall", ShelfStyle.Bookcase, 8, 12, 2,
+                    new Vector3(0.3f, 0.2f, 0.22f), new[] { LoafKinds[k] }, new[] { LoafNames[k] }), 4.3f);
             }
-            r.Row(Wall.N, -9.2f, 9.2f, 5, Loaf);
-            r.Row(Wall.W, -9.2f, 0.6f, 3, Loaf);
-            r.Row(Wall.W, 5.4f, 8.8f, 1, Loaf);
+            r.Row(Wall.N, -9.2f, 9.2f, 4, Loaf);
+            r.Row(Wall.W, -9.2f, 0.6f, 2, Loaf);
             r.Row(Wall.E, -9.2f, -5.4f, 1, Loaf);
-            r.Row(Wall.E, -0.6f, 8.8f, 3, Loaf);
+            r.Row(Wall.E, -0.6f, 8.8f, 2, Loaf);
 
             string[] longKinds = { "long_baguette", "long_baton" };
             string[] longNames = { "Baguettes", "Rustic batons" };
-            ShelfSettings Rack(int k) => Make(r, $"Bread Rack {longNames[k]}", "Bread rack", ShelfStyle.OpenRack, 5, 6, 3,
-                new Vector3(0.46f, 0.12f, 0.12f), new[] { longKinds[k] }, new[] { longNames[k] });
+            ShelfSettings Rack(int k) => Make(r, $"Bread Rack {longNames[k]}", "Bread rack", ShelfStyle.OpenRack, 8, 8, 3,
+                new Vector3(0.46f, 0.12f, 0.12f), new[] { longKinds[k] }, new[] { longNames[k] }, 0.25f);
             int rack = 0;
-            foreach (float z in new[] { 2f, -4f })
-            foreach (float x in new[] { -5f, 5f })
+            foreach (float z in new[] { 3.5f, -3f })
+            foreach (float x in new[] { -5.2f, 5.2f })
             {
                 r.Island(x, z, Rack(rack % 2), Rack((rack + 1) % 2));
                 rack++;
+            }
+
+            HarvestTable(r, 0f, 0.5f);
+            Rug(r, 0f, -6f, new Vector2(3.2f, 6f), new Color(0.6f, 0.45f, 0.2f));
+            foreach (int side in new[] { -1, 1 })
+            {
+                Plant(r, side * 9f, -9f, 1.6f);
+                Sacks(r, side * 3.4f, -9f);
             }
         }
 
         private static readonly string[] PastryKinds = { "pastry_croissant", "pastry_chocolat", "pastry_danish", "pastry_swirl" };
         private static readonly string[] PastryNames = { "Croissants", "Pains au chocolat", "Danishes", "Cinnamon swirls" };
 
-        /// <summary>A salon of pastry cases with racks along the long wall, and café tables to sit at.</summary>
+        /// <summary>A salon of big pastry counters, tall pastry cabinets on the long wall, and café tables.</summary>
         private static void BuildPastrySalon(Room r)
         {
-            ShelfSettings Case(int k, int i) => Make(r, $"Case {PastryNames[k]} {i}", "Pastry case", ShelfStyle.Case, 3, 11, 3,
-                new Vector3(0.22f, 0.12f, 0.16f), new[] { PastryKinds[k] }, new[] { PastryNames[k] }, 0.45f);
+            ShelfSettings Case(int k, int i) => Make(r, $"Case {PastryNames[k]} {i}", "Pastry case", ShelfStyle.Case, 4, 15, 3,
+                new Vector3(0.22f, 0.12f, 0.16f), new[] { PastryKinds[k] }, new[] { PastryNames[k] }, 0.6f);
             int c = 0;
-            foreach (float z in new[] { 2.5f, -3.5f })
-            foreach (float x in new[] { -5.5f, 0f, 5.5f })
+            foreach (float z in new[] { 4f, -2f })
+            foreach (float x in new[] { -5.4f, 0f, 5.4f })
             {
                 r.Island(x, z, Case(c % 4, c), Case((c + 1) % 4, c));
                 c++;
             }
-            r.Row(Wall.W, -9.2f, 9.2f, 7, i => Make(r, $"Pastry Rack {PastryNames[i % 4]}", "Pastry rack", ShelfStyle.OpenRack, 5, 10, 2,
-                new Vector3(0.22f, 0.12f, 0.16f), new[] { PastryKinds[i % 4] }, new[] { PastryNames[i % 4] }));
+            r.Row(Wall.W, -9.2f, 9.2f, 6, i => Tall(Make(r, $"Pastry Cabinet {PastryNames[i % 4]}", "Pastry cabinet", ShelfStyle.Bookcase, 7, 12, 2,
+                new Vector3(0.22f, 0.15f, 0.16f), new[] { PastryKinds[i % 4] }, new[] { PastryNames[i % 4] }, 0.35f), 4.1f));
 
             // Café corner along the front wall.
             Material cloth = GreyboxAssets.Lit("Bakery_TableCloth", new Color(0.97f, 0.94f, 0.88f));
             foreach (float x in new[] { -5f, -1.5f, 2f, 5.5f })
             {
-                Vector3 at = r.World(x, -8.4f);
+                Vector3 at = r.World(x, -8.2f);
                 LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Café Table", r.Decor, at + new Vector3(0f, 0.74f, 0f), new Vector3(0.8f, 0.02f, 0.8f), cloth);
                 LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Table Leg", r.Decor, at + new Vector3(0f, 0.37f, 0f), new Vector3(0.07f, 0.37f, 0.07f), r.P.Wood);
                 foreach (int side in new[] { -1, 1 })
@@ -328,67 +344,213 @@ namespace TidyUp.Editor
                 }
                 LocationKit.BuildFlowers(r.Decor, at + new Vector3(0f, 0.76f, 0f));
             }
+            Rug(r, 0f, 1f, new Vector2(4f, 3f), new Color(0.35f, 0.5f, 0.55f));
+            Plant(r, 9f, -9f, 1.6f);
+            Plant(r, -8.8f, -9.1f, 1.4f);
+            Chalkboard(r, 8.2f, 8.6f, -20f);
         }
 
         private static readonly string[] CookieKinds = { "cookie_choc", "cookie_ginger", "cookie_shortbread" };
         private static readonly string[] CookieNames = { "Chocolate chip", "Gingerbread", "Shortbread" };
 
-        /// <summary>Long cookie counters under the windows and a field of cake stands.</summary>
+        /// <summary>Tall cookie cabinets under the windows, cake cabinets, and a field of big cake stands.</summary>
         private static void BuildCakeCookie(Room r)
         {
-            ShelfSettings Counter(int i) => Make(r, $"Cookie Counter {CookieNames[i % 3]}", "Cookie counter", ShelfStyle.Bookcase, 4, 20, 3,
-                new Vector3(0.1f, 0.06f, 0.1f), new[] { CookieKinds[i % 3] }, new[] { CookieNames[i % 3] });
+            ShelfSettings Counter(int i) => Tall(Make(r, $"Cookie Cabinet {CookieNames[i % 3]}", "Cookie cabinet", ShelfStyle.Bookcase, 9, 22, 2,
+                new Vector3(0.1f, 0.08f, 0.1f), new[] { CookieKinds[i % 3] }, new[] { CookieNames[i % 3] }, 0.45f), 3.8f);
             r.Row(Wall.E, -9.2f, 9.2f, 6, Counter);
+            r.Row(Wall.N, -9.2f, -2.4f, 2, i => Counter(i + 1));
+            r.Row(Wall.W, -0.6f, 8.6f, 3, i => Tall(Make(r, $"Cake Cabinet {i + 1}", "Cake cabinet", ShelfStyle.Bookcase, 4, 6, 2,
+                new Vector3(0.28f, 0.22f, 0.28f), new[] { "big_cake" }, new[] { "Lemon cakes" }, 0.35f), 4.1f));
             int s = 0;
-            foreach (float z in new[] { 4f, 0f, -4f })
-            foreach (float x in new[] { -6f, -2.5f, 1f })
-            {
-                if (s >= 8) break;
+            foreach (float z in new[] { 4.5f, 0.5f, -3.5f })
+            foreach (float x in new[] { -5.5f, -1.5f, 2.5f })
                 r.Stand(new StandSettings
                 {
-                    Name = $"Cake Stand {++s}", Label = "Cake stand", SlotsPerTier = new[] { 8, 6, 4 }, SlotSize = new Vector3(0.26f, 0.18f, 0.26f),
+                    Name = $"Cake Stand {++s}", Label = "Cake stand", SlotsPerTier = new[] { 12, 9, 6 }, SlotSize = new Vector3(0.26f, 0.18f, 0.26f),
                     TierSlotTypes = new[] { "big_cake" }, TierLabels = new[] { "Lemon cakes" }, FrameMaterial = r.P.Wood, MarkerMaterial = r.P.Marker,
                 }, x, z);
-            }
+            WeddingCake(r, -1.5f, -7.5f);
+            Plant(r, -9f, -9f, 1.5f);
+            Rug(r, -1.5f, 0.5f, new Vector2(10f, 10f), new Color(0.62f, 0.5f, 0.68f));
         }
 
-        /// <summary>Jars of jam and honey on tall shelves, sacks of flour and sugar along the back wall.</summary>
+        /// <summary>Jars of jam and honey on tall shelves, sacks along the back wall, barrels and herbs.</summary>
         private static void BuildPantry(Room r)
         {
-            ShelfSettings Jars(int i) => Tall(Make(r, $"Jar Shelf {i + 1}", "Jar shelf", ShelfStyle.Bookcase, 6, 26, 1,
+            ShelfSettings Jars(int i) => Tall(Make(r, $"Jar Shelf {i + 1}", "Jar shelf", ShelfStyle.Bookcase, 9, 28, 1,
                 new Vector3(0.1f, 0.13f, 0.11f), i % 2 == 0 ? new[] { "jar_jam", "jar_jam", "jar_honey" } : new[] { "jar_honey", "jar_jam", "jar_honey" },
-                i % 2 == 0 ? new[] { "Jam", "Jam", "Honey" } : new[] { "Honey", "Jam", "Honey" }), 3.2f);
-            r.Row(Wall.N, -9.2f, 9.2f, 6, Jars);
+                i % 2 == 0 ? new[] { "Jam", "Jam", "Honey" } : new[] { "Honey", "Jam", "Honey" }, 0.3f), 4f);
+            r.Row(Wall.N, -9.2f, 9.2f, 5, Jars);
             int j = 10;
-            foreach (float z in new[] { 2.5f, -3.5f })
-            foreach (float x in new[] { -4.5f, 3.5f })
-            {
-                if (z < 0f) break; // the front half stays open, by the door to the Pastry Salon
+            foreach (var (x, z) in new[] { (-5f, 3.5f), (4f, 3.5f), (-5f, -3f) })
                 r.Island(x, z, Jars(j++), Jars(j++));
-            }
             string[] sackKinds = { "sack_flour", "sack_sugar" };
             string[] sackNames = { "Flour", "Sugar" };
-            r.Row(Wall.W, -9.2f, 8.6f, 8, i => Make(r, $"Sack Rack {sackNames[i % 2]}", "Sack rack", ShelfStyle.OpenRack, 2, 6, 2,
+            r.Row(Wall.W, -9.2f, 8.6f, 8, i => Make(r, $"Sack Rack {sackNames[i % 2]}", "Sack rack", ShelfStyle.OpenRack, 3, 6, 2,
                 new Vector3(0.32f, 0.4f, 0.26f), new[] { sackKinds[i % 2] }, new[] { sackNames[i % 2] }, 0.08f));
+            foreach (var (x, z) in new[] { (8.6f, -8.6f), (7.7f, -8.9f), (8.9f, -7.6f), (4.5f, -8.8f) })
+                Barrel(r, x, z);
+            Crates(r, 6.5f, -6.5f);
+            HerbRack(r, 0f, 9.4f);
+            Rug(r, 0f, -1f, new Vector2(3f, 7f), new Color(0.45f, 0.55f, 0.35f));
         }
 
         private static readonly string[] RollKinds = { "roll_white", "roll_bun", "roll_bagel" };
         private static readonly string[] RollNames = { "Soft rolls", "Sweet buns", "Bagels" };
 
-        /// <summary>Where the baking happens: roll racks fresh from the ovens (the ovens are part of the shell), and workbenches.</summary>
+        /// <summary>Where the baking happens: tall roll trolleys fresh from the ovens (part of the shell), workbenches, pans.</summary>
         private static void BuildBakehouse(Room r)
         {
-            r.Row(Wall.N, -9.2f, 9.2f, 8, i => Make(r, $"Roll Rack {RollNames[i % 3]}", "Roll rack", ShelfStyle.OpenRack, 4, 10, 5,
-                new Vector3(0.12f, 0.1f, 0.12f), new[] { RollKinds[i % 3] }, new[] { RollNames[i % 3] }), 0.35f);
+            ShelfSettings Trolley(int i) => Make(r, $"Roll Trolley {RollNames[i % 3]}", "Roll trolley", ShelfStyle.OpenRack, 13, 10, 2,
+                new Vector3(0.12f, 0.12f, 0.12f), new[] { RollKinds[i % 3] }, new[] { RollNames[i % 3] }, 0.2f);
+            r.Row(Wall.N, -9.2f, 9.2f, 9, Trolley, 0.45f);
+            r.Row(Wall.S, 2.4f, 9.2f, 3, i => Trolley(i + 1), 0.45f);
             Material flour = GreyboxAssets.Lit("Bakery_Flour", new Color(0.97f, 0.95f, 0.9f));
             foreach (float x in new[] { -4f, 2f })
             {
-                Vector3 at = r.World(x, 0.5f);
-                LocationKit.MakeCleanable(LocationKit.Furniture("Workbench", r.Decor, at + new Vector3(0f, 0.45f, 0f), new Vector3(3.2f, 0.9f, 1.2f), r.P.Wood), "Workbench");
-                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Dough", r.Decor, at + new Vector3(-0.6f, 0.97f, 0f), new Vector3(0.45f, 0.18f, 0.4f), flour);
-                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Rolling Pin", r.Decor, at + new Vector3(0.5f, 0.94f, 0.1f), new Vector3(0.07f, 0.25f, 0.07f), r.P.Wood)
+                Vector3 at = r.World(x, 1f);
+                LocationKit.MakeCleanable(LocationKit.Furniture("Workbench", r.Decor, at + new Vector3(0f, 0.45f, 0f), new Vector3(3.6f, 0.9f, 1.4f), r.P.Wood), "Workbench");
+                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Dough", r.Decor, at + new Vector3(-0.8f, 0.97f, 0f), new Vector3(0.5f, 0.2f, 0.45f), flour);
+                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Dough", r.Decor, at + new Vector3(0.9f, 0.96f, -0.3f), new Vector3(0.35f, 0.15f, 0.3f), flour);
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Rolling Pin", r.Decor, at + new Vector3(0.3f, 0.94f, 0.2f), new Vector3(0.07f, 0.25f, 0.07f), r.P.Wood)
                     .transform.rotation = Quaternion.Euler(0f, 30f, 90f);
+                Pans(r, x, 1f);
             }
+            Sacks(r, -8.6f, -8.6f);
+            Sacks(r, -7.2f, -8.9f);
+            Crates(r, -8.8f, 6.2f);
+            Rug(r, -1f, -5f, new Vector2(8f, 3f), new Color(0.7f, 0.6f, 0.45f));
+        }
+
+        // ───────────── Room decoration (decor only: no slots) ─────────────
+
+        private static Material DecorMat(string name, Color color) => GreyboxAssets.Lit("Bakery_Decor_" + name, color);
+
+        private static void Rug(Room r, float x, float z, Vector2 size, Color color)
+        {
+            Material m = GreyboxAssets.Textured($"Bakery_Rug_{ColorUtility.ToHtmlStringRGB(color)}", color, Art.TextureSet.Fabric, 0.8f, 0.05f);
+            GameObject rug = GreyboxAssets.Box("Rug", r.Decor, r.World(x, z) + new Vector3(0f, 0.012f, 0f), new Vector3(size.x, 0.012f, size.y), m, keepCollider: false);
+            GreyboxAssets.MarkStatic(rug);
+            GameObject border = GreyboxAssets.Box("Rug Border", r.Decor, r.World(x, z) + new Vector3(0f, 0.009f, 0f), new Vector3(size.x + 0.25f, 0.01f, size.y + 0.25f),
+                DecorMat("RugBorder", Color.Lerp(color, new Color(0.95f, 0.85f, 0.6f), 0.6f)), keepCollider: false);
+            GreyboxAssets.MarkStatic(border);
+        }
+
+        private static void Plant(Room r, float x, float z, float height)
+        {
+            Vector3 at = r.World(x, z);
+            LocationKit.Furniture("Plant Pot", r.Decor, at + new Vector3(0f, 0.3f, 0f), new Vector3(0.6f, 0.6f, 0.6f), DecorMat("Terracotta", new Color(0.72f, 0.38f, 0.25f)));
+            Material leaf = DecorMat("Leaf", new Color(0.3f, 0.52f, 0.28f));
+            LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Stem", r.Decor, at + new Vector3(0f, 0.6f + height * 0.3f, 0f), new Vector3(0.06f, height * 0.3f, 0.06f), DecorMat("Stem", new Color(0.35f, 0.25f, 0.15f)));
+            for (int i = 0; i < 4; i++)
+            {
+                float a = i * 1.57f;
+                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Foliage", r.Decor, at + new Vector3(Mathf.Cos(a) * 0.25f, 0.6f + height * (0.55f + i * 0.1f), Mathf.Sin(a) * 0.25f),
+                    new Vector3(0.75f, 0.55f, 0.75f), leaf);
+            }
+        }
+
+        /// <summary>A pavement chalkboard on an easel ("Fresh today").</summary>
+        private static void Chalkboard(Room r, float x, float z, float yaw)
+        {
+            var root = new GameObject("Chalkboard").transform;
+            root.SetParent(r.Decor, false);
+            root.SetPositionAndRotation(r.World(x, z), Quaternion.Euler(0f, yaw, 0f));
+            GameObject board = LocationKit.Furniture("Board", root, root.position + new Vector3(0f, 0.75f, 0f), new Vector3(0.75f, 1.1f, 0.05f), DecorMat("Chalk", new Color(0.12f, 0.16f, 0.14f)));
+            board.transform.localRotation = Quaternion.Euler(-10f, 0f, 0f);
+            LocationKit.BuildWallSign(root, "Chalk Text", "FRESH\nTODAY", root.TransformPoint(new Vector3(0f, 0.85f, -0.05f)), root.rotation * Quaternion.Euler(-10f, 0f, 0f),
+                new Vector2(0.6f, 0.5f), r.P.Wood, new Color(0.14f, 0.18f, 0.16f), new Color(0.95f, 0.93f, 0.85f));
+        }
+
+        /// <summary>A five-tier wedding cake on a round table: the room's centrepiece.</summary>
+        private static void WeddingCake(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            Material icing = DecorMat("Icing", new Color(0.98f, 0.95f, 0.92f));
+            Material pink = DecorMat("IcingPink", new Color(0.96f, 0.72f, 0.78f));
+            LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Display Table", r.Decor, at + new Vector3(0f, 0.4f, 0f), new Vector3(1.8f, 0.4f, 1.8f), r.P.Accent);
+            LocationKit.Furniture("Display Collider", r.Decor, at + new Vector3(0f, 0.4f, 0f), new Vector3(1.5f, 0.8f, 1.5f), r.P.Accent).GetComponent<MeshRenderer>().enabled = false;
+            float y = 0.8f;
+            for (int t = 0; t < 5; t++)
+            {
+                float d = 1.2f - t * 0.2f, h = 0.32f - t * 0.03f;
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Tier", r.Decor, at + new Vector3(0f, y + h * 0.5f, 0f), new Vector3(d, h * 0.5f, d), t % 2 == 0 ? icing : pink);
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Trim", r.Decor, at + new Vector3(0f, y + 0.02f, 0f), new Vector3(d + 0.04f, 0.02f, d + 0.04f), t % 2 == 0 ? pink : icing);
+                y += h;
+            }
+            LocationKit.BuildFlowers(r.Decor, at + new Vector3(0f, y, 0f));
+        }
+
+        /// <summary>A long harvest table heaped with (decorative) loaves and wheat sheaves.</summary>
+        private static void HarvestTable(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            LocationKit.Furniture("Harvest Table", r.Decor, at + new Vector3(0f, 0.42f, 0f), new Vector3(1.6f, 0.84f, 4.2f), r.P.Wood);
+            Material crust = DecorMat("Crust", new Color(0.72f, 0.45f, 0.22f));
+            Material wheat = DecorMat("Wheat", new Color(0.92f, 0.78f, 0.42f));
+            var random = new System.Random(5);
+            for (int i = 0; i < 14; i++)
+            {
+                var p = new Vector3(((float)random.NextDouble() - 0.5f) * 1.2f, 0.95f, ((float)random.NextDouble() - 0.5f) * 3.8f);
+                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Loaf", r.Decor, at + p, new Vector3(0.36f, 0.2f, 0.24f), crust)
+                    .transform.rotation = Quaternion.Euler(0f, (float)random.NextDouble() * 180f, 0f);
+            }
+            foreach (float dz in new[] { -1.6f, 1.6f })
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Wheat Sheaf", r.Decor, at + new Vector3(0f, 1.3f, dz), new Vector3(0.3f, 0.45f, 0.3f), wheat);
+        }
+
+        private static void Barrel(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            LocationKit.Furniture("Barrel", r.Decor, at + new Vector3(0f, 0.45f, 0f), new Vector3(0.6f, 0.9f, 0.6f), r.P.Wood).GetComponent<MeshRenderer>().enabled = false;
+            LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Barrel Body", r.Decor, at + new Vector3(0f, 0.45f, 0f), new Vector3(0.65f, 0.45f, 0.65f), r.P.Wood);
+            foreach (float y in new[] { 0.15f, 0.75f })
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Hoop", r.Decor, at + new Vector3(0f, y, 0f), new Vector3(0.68f, 0.025f, 0.68f), DecorMat("Iron", new Color(0.2f, 0.2f, 0.2f)));
+        }
+
+        private static void Crates(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            Material crate = GreyboxAssets.Textured("Bakery_Crate", new Color(0.62f, 0.44f, 0.28f), Art.TextureSet.Planks, 0.6f, 0.2f);
+            LocationKit.Furniture("Crate", r.Decor, at + new Vector3(0f, 0.3f, 0f), new Vector3(0.6f, 0.6f, 0.6f), crate);
+            LocationKit.Furniture("Crate", r.Decor, at + new Vector3(0.7f, 0.3f, 0.1f), new Vector3(0.6f, 0.6f, 0.6f), crate);
+            LocationKit.Furniture("Crate", r.Decor, at + new Vector3(0.35f, 0.85f, 0.05f), new Vector3(0.55f, 0.5f, 0.55f), crate).transform.rotation = Quaternion.Euler(0f, 15f, 0f);
+        }
+
+        private static void Sacks(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            Material sack = GreyboxAssets.Textured("Bakery_FlourSack", new Color(0.95f, 0.92f, 0.84f), Art.TextureSet.Fabric, 0.5f, 0.05f);
+            foreach (var (dx, dy, dz) in new[] { (-0.3f, 0.25f, 0f), (0.3f, 0.25f, 0.05f), (0f, 0.62f, 0.02f) })
+                LocationKit.AddPrimitive(PrimitiveType.Sphere, "Sack", r.Decor, at + new Vector3(dx, dy, dz), new Vector3(0.6f, 0.5f, 0.45f), sack);
+        }
+
+        /// <summary>Copper pans hanging from a rail over a workbench.</summary>
+        private static void Pans(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            Material copper = DecorMat("Copper", new Color(0.78f, 0.45f, 0.28f));
+            Material iron = DecorMat("Iron", new Color(0.2f, 0.2f, 0.2f));
+            GreyboxAssets.MarkStatic(GreyboxAssets.Box("Pan Rail", r.Decor, at + new Vector3(0f, 2.4f, 0f), new Vector3(3f, 0.05f, 0.05f), iron, keepCollider: false));
+            foreach (float dx in new[] { -1.2f, -0.6f, 0f, 0.6f, 1.2f })
+            {
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Pan", r.Decor, at + new Vector3(dx, 2.05f, 0f), new Vector3(0.38f, 0.03f, 0.38f), copper)
+                    .transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                GreyboxAssets.MarkStatic(GreyboxAssets.Box("Pan Hook", r.Decor, at + new Vector3(dx, 2.3f, 0f), new Vector3(0.02f, 0.2f, 0.02f), iron, keepCollider: false));
+            }
+            foreach (float dx in new[] { -1.5f, 1.5f })
+                GreyboxAssets.MarkStatic(GreyboxAssets.Box("Pan Rail Hanger", r.Decor, at + new Vector3(dx, 4.2f, 0f), new Vector3(0.03f, 3.6f, 0.03f), iron, keepCollider: false));
+        }
+
+        /// <summary>Bunches of dried herbs hanging along a beam on the pantry's back wall, above the jars.</summary>
+        private static void HerbRack(Room r, float x, float z)
+        {
+            Vector3 at = r.World(x, z);
+            GreyboxAssets.MarkStatic(GreyboxAssets.Box("Herb Beam", r.Decor, at + new Vector3(0f, 4.4f, 0f), new Vector3(16f, 0.12f, 0.12f), r.P.Wood, keepCollider: false));
+            Material[] herbs = { DecorMat("Herb1", new Color(0.45f, 0.55f, 0.3f)), DecorMat("Herb2", new Color(0.6f, 0.55f, 0.35f)), DecorMat("Lavender", new Color(0.55f, 0.45f, 0.7f)) };
+            for (int i = 0; i < 22; i++)
+                LocationKit.AddPrimitive(PrimitiveType.Capsule, "Herbs", r.Decor, at + new Vector3(-7.6f + i * 0.72f, 4.1f, -0.05f), new Vector3(0.18f, 0.25f, 0.18f), herbs[i % 3]);
         }
 
         // ───────────── The shell: the building itself ─────────────
@@ -412,6 +574,27 @@ namespace TidyUp.Editor
                     Quaternion.LookRotation(-n), new Vector2(3.2f, 0.5f), p.Wood, new Color(0.98f, 0.92f, 0.78f), new Color(0.35f, 0.18f, 0.08f));
             }
 
+
+            // Dark ceiling beams across the whole floor (the frieze runs along the partitions, see Partition), and paintings
+            // either side of each doorway, above the tall shelves.
+            Material beam = GreyboxAssets.Textured("Bakery_Beam", new Color(0.32f, 0.2f, 0.12f), Art.TextureSet.Wood, 1.2f, 0.3f);
+
+            for (float bx = -27.5f; bx <= 27.6f; bx += 5f)
+                GreyboxAssets.MarkStatic(GreyboxAssets.Box("Ceiling Beam", building, new Vector3(bx, Ceiling - 0.22f, 0f), new Vector3(0.32f, 0.44f, FloorSize.y - 0.2f), beam, keepCollider: false));
+            int seed = 31;
+            foreach (var d in Doorways)
+            {
+                Vector3 c = new Vector3(d.at.x, 0f, d.at.y);
+                Vector3 n = d.alongX ? Vector3.forward : Vector3.right;
+                Vector3 along = d.alongX ? Vector3.right : Vector3.forward;
+                foreach (int face in new[] { -1, 1 })
+                foreach (int side in new[] { -1, 1 })
+                {
+                    Vector3 at = c + n * face * (WallThickness * 0.5f + 0.02f) + along * side * 4.2f + Vector3.up * 4.85f;
+                    var picture = (seed % 3) == 0 ? Art.ArchitectureKit.Picture.Map : Art.ArchitectureKit.Picture.Landscape;
+                    Art.ArchitectureKit.Painting(decor, at, Quaternion.LookRotation(-n * face), new Vector2(1.5f, 0.95f), picture, seed++);
+                }
+            }
             // Each room gets its own floor inlay, two rows of chandeliers, and windows in the front and back walls.
             foreach (ZoneSpec z in Zones)
             {
@@ -542,6 +725,9 @@ namespace TidyUp.Editor
                 GreyboxAssets.MarkStatic(GreyboxAssets.Box("Baseboard", parent, Pos(mid, 0.07f), Size(len, 0.14f, WallThickness + 0.06f), p.Trim, keepCollider: false));
                 GreyboxAssets.MarkStatic(GreyboxAssets.Box("Chair Rail", parent, Pos(mid, 1.03f), Size(len, 0.06f, WallThickness + 0.09f), p.Trim, keepCollider: false));
             }
+            // The painted frieze runs along the partitions too, both faces, over the doorways.
+            GreyboxAssets.MarkStatic(GreyboxAssets.Box("Frieze", parent, Pos((start + end) * 0.5f, 5.55f), Size(end - start, 0.36f, WallThickness + 0.08f),
+                GreyboxAssets.Textured("Bakery_Frieze", new Color(0.22f, 0.42f, 0.42f), Art.TextureSet.Damask, 1.2f, 0.2f), keepCollider: false));
             foreach (float c in cuts)
             {
                 // Lintel over the doorway, and a framed opening: jambs, a moulded head.
