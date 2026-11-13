@@ -268,3 +268,4 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - an entrance pavilion with a pediment, an arched double door up two steps, arched shop windows with awnings, dormers, smoking chimneys
   - the street now runs on to it; the old bakery's spot is a townhouse, and the clock tower moved to the side of the square
 - **Cost (Editor):** 5–8 ms per frame. Draw calls run 10–16 k with 3–4 rooms loaded, so batching items is the next performance step.
+- **Fix (same day):** the street's extension toward the Grand Bakery (x -23 to -29.5) was a visual slab without a collider, so walking to the Bakery dropped the player into the void. It's walkable now; a raycast sweep along the whole walk finds solid ground. Safety net: `FirstPersonController` remembers the last solid ground and puts the player back there if they ever fall below y = -25 (and logs a warning, so any new gap shows up).

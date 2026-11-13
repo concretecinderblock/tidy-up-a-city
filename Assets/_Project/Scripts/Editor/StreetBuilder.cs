@@ -519,7 +519,7 @@ namespace TidyUp.Editor
             foreach (int dir in new[] { -1, 1 })
             {
                 Box("Road Beyond", town, new Vector3(dir * (HalfLength + 12f), -0.1f, 0f) + _c, new Vector3(24f, 0.2f, 16f),
-                    GreyboxAssets.Textured("City_Cobbles", Core.Palette.WarmStone, Art.TextureSet.Cobbles, 2.2f, 0.2f, 1.2f));
+                    GreyboxAssets.Textured("City_Cobbles", Core.Palette.WarmStone, Art.TextureSet.Cobbles, 2.2f, 0.2f, 1.2f), collider: true); // walkable: the street runs on to the Grand Bakery
                 for (int i = 0; i < (dir < 0 ? 1 : 4); i++) // west: one house, then the square in front of the Grand Bakery
                 {
                     float x = dir * (HalfLength + 3.5f + i * 6.2f);

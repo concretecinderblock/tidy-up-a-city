@@ -65,8 +65,32 @@ namespace TidyUp.Core
             Vector3 velocity = _horizontalVelocity;
             velocity.y = _verticalVelocity;
             _controller.Move(velocity * dt);
+            KeepInTheWorld();
         }
 
+
+        private Vector3 _lastSafePosition;
+        private bool _hasSafePosition;
+        private float _nextSafeSample;
+        private const float FallLimit = -25f;
+
+        /// <summary>
+        /// A safety net: remembers where the player last stood on solid ground, and if they ever drop out of the
+        /// world (a gap in a floor), puts them back there instead of falling forever.
+        /// </summary>
+        private void KeepInTheWorld()
+        {
+            if (_controller.isGrounded && Time.time >= _nextSafeSample)
+            {
+                _lastSafePosition = transform.position;
+                _hasSafePosition = true;
+                _nextSafeSample = Time.time + 0.5f;
+            }
+            if (transform.position.y > FallLimit) return;
+            Debug.LogWarning($"[Tidy Up] The player fell out of the world near {transform.position}; putting them back.", this);
+            float yaw = transform.eulerAngles.y;
+            Teleport(_hasSafePosition ? _lastSafePosition + Vector3.up * 0.2f : Vector3.up, yaw);
+        }
         /// <summary>Moves the player instantly (doors, scene changes), facing yaw degrees, looking level.</summary>
         public void Teleport(Vector3 position, float yaw)
         {
@@ -77,6 +101,8 @@ namespace TidyUp.Core
             _horizontalVelocity = Vector3.zero;
             _verticalVelocity = 0f;
             _pitch = 0f;
+            _lastSafePosition = position; // a door or load never counts as falling
+            _hasSafePosition = true;
             if (_cameraPivot != null) _cameraPivot.localRotation = Quaternion.identity;
         }
 
