@@ -302,3 +302,7 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - `ItemDrawDistance` skips items more than 30 m from the camera.
   - The decorative stock baskets cast no shadows.
   - The hint-ghost check caches slot positions and checks 600 slots per frame instead of every slot every 0.2 s.
+- **Minimap update (same day; Jesse chose: nicer look, show shelves, rotate with me):**
+  - **Look:** a parchment floor plan in a wooden frame with rounded corners (sprites generated at runtime, no art assets), soft room colours (the room you're in brighter), and an N that circles the rim. Under it: the room you're in, its progress, and "M full map".
+  - **Shelves:** every fixture of each loaded room is drawn to scale from its geometry, warm wood when clean and dusty grey while it still needs cleaning (checked twice a second).
+  - **Rotation:** the minimap turns so your view always points up, with a fixed arrow in the middle. The full map stays north-up with a turning arrow, and its room names sit on parchment cards above the fixtures.

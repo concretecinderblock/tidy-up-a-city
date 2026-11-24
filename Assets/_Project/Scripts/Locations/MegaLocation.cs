@@ -124,6 +124,9 @@ namespace TidyUp.Locations
         public bool ZoneVisited(int zone) => LocationStateStore.Get(StateKey(zone)) != null;
         public bool ZoneLoaded(int zone) => _runtime.Length > zone && _runtime[zone].State == ZoneState.Loaded;
 
+        /// <summary>The loaded room's runtime (its fixtures, progress), or null while it isn't loaded.</summary>
+        public LocationRuntime ZoneRuntime(int zone) => _runtime.Length > zone && _runtime[zone].State == ZoneState.Loaded ? _runtime[zone].Runtime : null;
+
         /// <summary>The zone containing a world position, or -1.</summary>
         public int ZoneAt(Vector3 position)
         {
