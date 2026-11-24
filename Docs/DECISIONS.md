@@ -281,3 +281,24 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - The chalkboards' boards were placed with world coordinates under an offset parent (black rectangles far from their easels); the ones by the street door also faced the wall.
   - Dust patches sat exactly level with the rug borders and flickered; raised to 0.026 m.
   - The Muddle now keeps out of decorations: `MuddleScatterer` has keep-clear bounds (built per room from the standing decor, plus the ovens), so no items end up inside sacks, cakes, plants or ovens.
+
+## 2026-11-24 · Bug fixes and performance for the mega Bakery
+- **Dust bunnies from the side:** bunnies only appeared on shelf faces turned toward the player. Standing beside a cabinet left no spot, and the cabinet cleaned itself. Spots now fall back to the faces seen at an angle, then to any face. The minigame is never skipped.
+- **Inventory strip:** shows at most five kinds (the selected kind and its neighbours in cycle order), with "‹ n more" and "n more ›" for the rest, so it can't run off the screen.
+- **Held stack:**
+  - capped by height (0.22 m in camera space), so ten cakes no longer tower into the view
+  - held items shrunk to 0.13 m
+  - the base fixed low on the right
+  - the corner minimap moved to the top right, under the controls
+- **Lag spikes** (measured with the new `FrameSpikeMonitor`, development builds only, and perf logs):
+  - Each room load froze one frame for 1.2–3 s: Unity activates a 3,000-item scene in a single frame, and that can't be spread out. Unloads cost about 100 ms.
+  - Fix: a mega location of up to 30,000 items (`MegaLocation._keepAllLoadedUpTo`) loads every room behind the entry fade (shown as "Tidying the way in…") and never unloads while you're inside. Bigger locations still stream rooms by distance.
+  - Result: no spikes while walking (before: 34 spikes of up to 3 s). Entering takes about 11 s in the Editor; a built game will be faster.
+- **Steady frame cost:**
+  - Items were almost all of it: 20k item renderers, with several draws each.
+  - The **GPU Resident Drawer** is on (URP `PC_RPAsset`, Instanced Drawing; Graphics "BatchRendererGroup Variants" set to Keep All so builds keep the shaders). At the busiest spot, draw calls fell from 24k to about 3–5k and triangles from 11.8M to 4.3M; frames sit at about 9–11 ms in the Editor.
+  - Its GPU occlusion culling stays **off**: it broke the held-items overlay camera (flat cyan shapes). The held stack also opts out of the drawer (the Disallow GPU Driven Rendering component, added by type name because the class is internal).
+  - `SceneBatcher` statically batches the fixed parts of every location scene when it loads (Unity only does this automatically for scenes in the build).
+  - `ItemDrawDistance` skips items more than 30 m from the camera.
+  - The decorative stock baskets cast no shadows.
+  - The hint-ghost check caches slot positions and checks 600 slots per frame instead of every slot every 0.2 s.

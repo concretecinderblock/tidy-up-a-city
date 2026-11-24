@@ -21,7 +21,8 @@ namespace TidyUp.Core
         private static readonly Vector3 RestRotation = new Vector3(24f, -40f, 0f);
         [SerializeField, Min(1)] private int _maxShown = 10;
         [Tooltip("Large things (sacks, cakes) are shrunk to at most this size so the stack stays in frame.")]
-        [SerializeField] private float _maxItemSize = 0.26f;
+        [SerializeField] private float _maxHeldItemSize = 0.13f;
+        private const float MaxStackHeight = 0.22f; // metres in camera space at 0.55 m: the lower right corner only
 
         private readonly List<GameObject> _pool = new List<GameObject>();
         private readonly List<TidyItem> _order = new List<TidyItem>();
@@ -36,6 +37,9 @@ namespace TidyUp.Core
         private void Awake()
         {
             _stack = new GameObject("Held Stack").transform;
+            // The held stack renders through its own overlay camera: keep it out of the GPU Resident Drawer, which
+            // would draw these proxies with the main camera's instancing (they came out as flat cyan shapes).
+            ExcludeFromGpuDriven(_stack.gameObject);
             _stack.SetParent(_camera != null ? _camera : transform, false);
             _stack.localPosition = RestPosition + _heightOffset;
             _stack.localRotation = Quaternion.Euler(RestRotation);
@@ -95,7 +99,17 @@ namespace TidyUp.Core
             foreach (TidyItem item in inventory.Items) if (item != null && item.Definition != selectedKind) _order.Add(item);
             foreach (TidyItem item in inventory.Items) if (item != null && item.Definition == selectedKind && item != selected) _order.Add(item);
             if (selected != null) _order.Add(selected);
-            int first = Mathf.Max(0, _order.Count - _maxShown);
+            // Show as many from the top as fit in a low pile (never up into the view): ten cakes or sacks would
+            // otherwise stack higher than the screen.
+            int first = _order.Count;
+            float pile = 0f;
+            for (int i = _order.Count - 1; i >= 0 && _order.Count - i <= _maxShown; i--)
+            {
+                float h = StackHeight(_order[i]);
+                if (first < _order.Count && pile + h > MaxStackHeight) break;
+                pile += h;
+                first = i;
+            }
 
             int layer = TidyLayers.Held >= 0 ? TidyLayers.Held : 0;
             float y = 0f;
@@ -119,7 +133,7 @@ namespace TidyUp.Core
                     if (size.x <= size.z) { lie = Quaternion.Euler(0f, 0f, 90f); height = size.x; }
                     else { lie = Quaternion.Euler(90f, 0f, 0f); height = size.z; }
                 }
-                float scale = Mathf.Min(1f, _maxItemSize / Mathf.Max(size.x, Mathf.Max(size.y, size.z)));
+                float scale = Mathf.Min(1f, _maxHeldItemSize / Mathf.Max(size.x, Mathf.Max(size.y, size.z)));
                 // A slightly untidy stack: each item turned a little, seeded by its position so it doesn't jitter.
                 float yaw = Mathf.Sin(i * 12.9898f) * 9f + (lie == Quaternion.identity ? 0f : 90f);
                 Transform t = proxy.transform;
@@ -134,12 +148,34 @@ namespace TidyUp.Core
             }
             for (int i = _shown; i < _pool.Count; i++) _pool[i].SetActive(false);
             _stack.gameObject.SetActive(_shown > 0);
-            // Centre the stack's height around the rest point so tall stacks rise rather than sink out of view.
-            _heightOffset = new Vector3(0f, -y * 0.55f, 0f);
+            // The pile grows up from a fixed base low in the view; its height is capped above.
+            _heightOffset = new Vector3(0f, -0.06f, 0f);
             _stack.localPosition = RestPosition + _heightOffset;
             if (_shown > before) _pop = 1f;
         }
 
+
+
+        // Unity's opt-out from the GPU Resident Drawer (the "Disallow GPU Driven Rendering" component you can add in
+        // the Inspector). Its class is internal to scripts, so it's looked up by name; if it's missing, nothing breaks.
+        private static readonly System.Type DisallowGpuDriven =
+            System.Type.GetType("UnityEngine.Rendering.DisallowGPUDrivenRendering, Unity.RenderPipelines.GPUDriven.Runtime");
+
+        private static void ExcludeFromGpuDriven(GameObject go)
+        {
+            if (DisallowGpuDriven != null && go.GetComponent(DisallowGpuDriven) == null) go.AddComponent(DisallowGpuDriven);
+        }
+        /// <summary>How tall one item stands in the pile (lying down if it's long, shrunk if it's big).</summary>
+        private float StackHeight(TidyItem item)
+        {
+            MeshFilter source = item != null ? item.GetComponentInChildren<MeshFilter>(true) : null;
+            if (source == null || source.sharedMesh == null) return 0f;
+            Vector3 size = source.sharedMesh.bounds.size;
+            float height = size.y;
+            if (ScatterRules.ShouldLieDown(size)) height = size.x <= size.z ? size.x : size.z;
+            float scale = Mathf.Min(1f, _maxHeldItemSize / Mathf.Max(size.x, Mathf.Max(size.y, size.z)));
+            return height * scale + 0.002f;
+        }
         /// <summary>The item's bounds in stack space for its current local rotation and scale.</summary>
         private Bounds WorldBounds(GameObject proxy, Mesh mesh)
         {
@@ -169,6 +205,7 @@ namespace TidyUp.Core
                 var renderer = go.AddComponent<MeshRenderer>();
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+                ExcludeFromGpuDriven(go); // drawn by the overlay camera, not GPU-driven
                 go.SetActive(false);
                 _pool.Add(go);
             }

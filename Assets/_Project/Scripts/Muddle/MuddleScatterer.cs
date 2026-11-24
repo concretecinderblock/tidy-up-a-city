@@ -64,6 +64,7 @@ namespace TidyUp.Muddle
                 return;
             }
 
+            var timer = System.Diagnostics.Stopwatch.StartNew();
             var random = new System.Random(seed);
             _grid.Clear();
             List<ItemSlot> slots = CollectSlots();
@@ -93,6 +94,7 @@ namespace TidyUp.Muddle
                 RestOn(item, point.y);
             }
             HasScattered = true;
+            if (timer.ElapsedMilliseconds > 15) Debug.Log($"[Tidy Up][Perf] Muddle scattered {muddled.Count} items in {timer.ElapsedMilliseconds} ms ({StateKey}).", this);
         }
 
         /// <summary>

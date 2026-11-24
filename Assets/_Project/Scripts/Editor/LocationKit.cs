@@ -891,12 +891,14 @@ namespace TidyUp.Editor
             rig.Input = player.AddComponent<PlayerInputReader>();
             rig.Carry = player.AddComponent<PlayerCarry>();
             player.AddComponent<CarryUpgrades>().EditorConfigure(rig.Carry); // hands → basket → trolley → satchel
+            player.AddComponent<Core.Diagnostics.FrameSpikeMonitor>();        // logs slow frames in development builds
 
             var cameraGo = new GameObject("Player Camera");
             cameraGo.tag = "MainCamera";
             cameraGo.transform.SetParent(player.transform, false);
             cameraGo.transform.localPosition = new Vector3(0f, 1.65f, 0f);
             rig.Camera = cameraGo.AddComponent<Camera>();
+            cameraGo.AddComponent<ItemDrawDistance>(); // far-away items aren't drawn (mega locations)
             rig.Camera.nearClipPlane = 0.05f;
             rig.Camera.fieldOfView = 70f;
             rig.Camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;

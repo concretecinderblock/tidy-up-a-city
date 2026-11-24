@@ -69,8 +69,8 @@ namespace TidyUp.UI
             if (_mega == null || _mega.Zones.Count == 0) return;
             if (_font == null) _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-            // Corner minimap: bottom right, masked, centred on the player.
-            _miniFrame = Panel("Minimap", transform, new Vector2(1f, 0f), new Vector2(-30f - _miniSize * 0.5f, 30f + _miniSize * 0.5f), new Vector2(_miniSize, _miniSize), Background);
+            // Corner minimap: top right under the controls (the held stack has the bottom right), centred on the player.
+            _miniFrame = Panel("Minimap", transform, new Vector2(1f, 1f), new Vector2(-30f - _miniSize * 0.5f, -200f - _miniSize * 0.5f), new Vector2(_miniSize, _miniSize), Background);
             _miniFrame.gameObject.AddComponent<RectMask2D>();
             _mini = BuildPlan(_miniFrame, _miniScale, labels: false);
             Text hint = Label(_miniFrame, "Hint", "M  map", 16, TextAnchor.LowerRight, new Color(1f, 1f, 1f, 0.7f));

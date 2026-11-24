@@ -44,6 +44,9 @@ namespace TidyUp.Locations
         [SerializeField] private float _loadDistance = 20f;
         [Tooltip("Extra distance before a loaded room unloads again (so it doesn't flicker at the edge).")]
         [SerializeField] private float _unloadHysteresis = 8f;
+        [Tooltip("Locations up to this many items load every room behind the entry fade and keep them (no load or " +
+                 "unload hitches while walking). Bigger ones stream rooms by distance.")]
+        [SerializeField] private int _keepAllLoadedUpTo = 30000;
         [Tooltip("Outline of the floor for the map (world XZ).")]
         [SerializeField] private Rect _footprint;
         [Tooltip("Doorways between rooms (world XZ centre), drawn on the map.")]
@@ -189,7 +192,7 @@ namespace TidyUp.Locations
                 Zone z = _runtime[i];
                 float distance = DistanceToRect(z.Info.Area, p);
                 if (distance <= _loadDistance && z.State == ZoneState.Unloaded) StartCoroutine(LoadZone(z));
-                else if (distance > _loadDistance + _unloadHysteresis && z.State == ZoneState.Loaded && i != _activeZone && !CarriesFrom(z))
+                else if (!KeepAllLoaded && distance > _loadDistance + _unloadHysteresis && z.State == ZoneState.Loaded && i != _activeZone && !CarriesFrom(z))
                     StartCoroutine(UnloadZone(z));
             }
         }
@@ -215,6 +218,7 @@ namespace TidyUp.Locations
         private IEnumerator LoadZone(Zone z)
         {
             z.State = ZoneState.Loading;
+            float started = Time.realtimeSinceStartup;
             AsyncOperationHandle<SceneInstance> handle = Addressables.LoadSceneAsync(z.Info.Address, LoadSceneMode.Additive);
             yield return handle;
             if (handle.Status != AsyncOperationStatus.Succeeded)
@@ -224,6 +228,8 @@ namespace TidyUp.Locations
                 yield break;
             }
             z.Handle = handle;
+            SceneBatcher.Batch(handle.Result.Scene); // shelves and decor into a few draw calls
+            Debug.Log($"[Tidy Up][Perf] Zone {z.Info.Id} loaded in {(Time.realtimeSinceStartup - started) * 1000f:0} ms.", this);
             z.State = ZoneState.Loaded;
             if (_shuttingDown) yield break;
             int index = Array.IndexOf(_runtime, z);
@@ -268,14 +274,34 @@ namespace TidyUp.Locations
                 if (_runtime[i].Runtime == runtime) _runtime[i].Runtime = null;
         }
 
-        /// <summary>Waits until the room at the entrance is in (the loader keeps the screen faded until then).</summary>
-        public IEnumerator WaitUntilReady(Vector3 playerPosition, float timeout = 20f)
+        /// <summary>Small enough to hold every room at once (see _keepAllLoadedUpTo).</summary>
+        public bool KeepAllLoaded => Total <= _keepAllLoadedUpTo;
+
+        /// <summary>
+        /// Waits until the rooms are in (the loader keeps the screen faded until then): every room when the location
+        /// is small enough to keep them all, otherwise the room at the entrance and its neighbours.
+        /// </summary>
+        public IEnumerator WaitUntilReady(Vector3 playerPosition, float timeout = 60f)
         {
-            Stream(playerPosition);
+            if (KeepAllLoaded)
+            {
+                foreach (Zone z in _runtime)
+                    if (z.State == ZoneState.Unloaded) StartCoroutine(LoadZone(z));
+            }
+            else Stream(playerPosition);
             int zone = ZoneAt(playerPosition);
             float until = Time.unscaledTime + timeout;
-            while (zone >= 0 && (_runtime[zone].State != ZoneState.Loaded || _runtime[zone].Runtime == null) && Time.unscaledTime < until)
-                yield return null;
+            while (Time.unscaledTime < until && !Ready(zone)) yield return null;
+        }
+
+        private bool Ready(int entranceZone)
+        {
+            if (KeepAllLoaded)
+            {
+                foreach (Zone z in _runtime) if (z.State != ZoneState.Loaded || z.Runtime == null) return false;
+                return true;
+            }
+            return entranceZone < 0 || (_runtime[entranceZone].State == ZoneState.Loaded && _runtime[entranceZone].Runtime != null);
         }
 
         /// <summary>Sets carried items down by the entrance. Returns how many.</summary>

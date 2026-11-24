@@ -354,6 +354,10 @@ namespace TidyUp.Editor
             rect.offsetMax = Vector2.zero;
             image.GetComponent<Image>().color = new Color(0.08f, 0.06f, 0.05f);
             image.GetComponent<Image>().raycastTarget = false;
+            // A quiet note while rooms load behind the fade (a big location takes a few seconds).
+            Text loading = LocationKit.CreateText(canvasGo.transform, "Loading", LocationKit.BuiltinFont, 26, TextAnchor.LowerRight,
+                new Vector2(1f, 0f), new Vector2(-40f, 40f), new Vector2(600f, 50f), new Color(1f, 0.9f, 0.7f, 0.8f));
+            loading.text = "Tidying the way in…";
             return group;
         }
     }

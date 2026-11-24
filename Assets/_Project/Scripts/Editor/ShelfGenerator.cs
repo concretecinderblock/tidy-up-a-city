@@ -177,6 +177,7 @@ namespace TidyUp.Editor
                         Material material = s.FillerMaterials[random.Next(s.FillerMaterials.Length)];
                         GameObject basket = GreyboxAssets.Box("Basket", filler, new Vector3(x + width * 0.5f, floorY + h * 0.5f, 0.01f),
                             new Vector3(width * 0.9f, h, s.Depth * 0.8f), material, keepCollider: false);
+                        basket.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // too high and small to matter
                         Mark(basket);
                         x += width + (random.NextDouble() < 0.2 ? 0.08f : 0.02f);
                     }

@@ -213,16 +213,24 @@ namespace TidyUp.UI
                 }
             }
             string selectedName = selected == null ? null : selected.Definition != null ? selected.Definition.DisplayName : selected.DisplayName;
+            // At most a handful of kinds fit on one line: show the selected kind and its neighbours (in the order
+            // Q / Tab cycles through them) and count the rest, so the strip never runs off the screen.
+            const int MaxShownKinds = 5;
+            int selectedIndex = Mathf.Max(0, _kinds.IndexOf(selectedName));
+            int first = Mathf.Clamp(selectedIndex - MaxShownKinds / 2, 0, Mathf.Max(0, _kinds.Count - MaxShownKinds));
+            int last = Mathf.Min(_kinds.Count, first + MaxShownKinds);
             if (_kinds.Count > 0) _builder.Append("   ");
-            for (int k = 0; k < _kinds.Count; k++)
+            if (first > 0) _builder.Append("<color=#C8C8C8>‹ ").Append(first).Append(" more</color>  ·  ");
+            for (int k = first; k < last; k++)
             {
                 bool isSelected = _kinds[k] == selectedName;
                 if (isSelected) _builder.Append("<b><color=#FFD86B>[");
                 _builder.Append(_kinds[k]);
                 if (_kindCounts[_kinds[k]] > 1) _builder.Append(" ×").Append(_kindCounts[_kinds[k]]);
                 if (isSelected) _builder.Append("]</color></b>");
-                if (k < _kinds.Count - 1) _builder.Append("  ·  ");
+                if (k < last - 1) _builder.Append("  ·  ");
             }
+            if (last < _kinds.Count) _builder.Append("  ·  <color=#C8C8C8>").Append(_kinds.Count - last).Append(" more ›</color>");
             _inventoryLabel.text = _builder.ToString();
         }
 

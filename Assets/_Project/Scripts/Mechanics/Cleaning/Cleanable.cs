@@ -124,7 +124,11 @@ namespace TidyUp.Mechanics.Cleaning
         {
             Initialise();
             if (IsClean || BunniesOut || _bunnyPrefab == null) return;
-            CollectBunnySpots(viewer);
+            // Bunnies on the faces turned to the player; from the side of a cabinet, its front seen at an angle;
+            // failing that, any face (never skip the game and clean the fixture by itself).
+            CollectBunnySpots(viewer, 0.2f, 2.0f);
+            if (_bunnySpots.Count == 0) CollectBunnySpots(viewer, -0.35f, 2.0f);
+            if (_bunnySpots.Count == 0) CollectBunnySpots(viewer, -1.01f, 2.6f);
             if (_bunnySpots.Count == 0) { FinishClean(transform.position); return; }
 
             int slotCount = _gatedGroup != null ? _gatedGroup.Slots.Length : 0;
@@ -167,7 +171,7 @@ namespace TidyUp.Mechanics.Cleaning
         }
 
         /// <summary>Spots in front of the fixture's slots on the player's side, at a comfortable height, shuffled.</summary>
-        private void CollectBunnySpots(Vector3 viewer)
+        private void CollectBunnySpots(Vector3 viewer, float minFacing, float maxHeight)
         {
             _bunnySpots.Clear();
             if (_gatedGroup == null) return;
@@ -195,8 +199,8 @@ namespace TidyUp.Mechanics.Cleaning
                 Vector3 spot = snap.position + front * 0.05f + Vector3.up * 0.005f;
                 Vector3 toViewer = viewer - spot;
                 toViewer.y = 0f;
-                if (Vector3.Dot(front, toViewer.normalized) < 0.2f) continue;  // facing away from the player
-                if (spot.y < 0.1f || spot.y > 2.0f) continue;                  // out of easy reach
+                if (Vector3.Dot(front, toViewer.normalized) < minFacing) continue; // facing away from the player
+                if (spot.y < 0.1f || spot.y > maxHeight) continue;            // out of easy reach
                 _bunnySpots.Add(spot);
             }
             for (int i = _bunnySpots.Count - 1; i > 0; i--)

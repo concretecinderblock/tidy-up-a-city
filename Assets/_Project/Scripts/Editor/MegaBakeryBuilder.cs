@@ -115,7 +115,7 @@ namespace TidyUp.Editor
                 SlotGroup[] groups = room.Groups.ToArray();
                 LocationKit.BuildZoneSystems(room.Location, spec.Id, spec.Name, groups, new[] { scatter }, spec.Area, p);
                 // The mess stays out of the decorations (no items inside sacks, cakes or plants, or in the ovens).
-                var muddle = UnityEngine.Object.FindFirstObjectByType<Muddle.MuddleScatterer>();
+                var muddle = UnityEngine.Object.FindAnyObjectByType<Muddle.MuddleScatterer>();
                 if (muddle != null) muddle.EditorSetKeepClear(KeepClear(room, spec));
                 int slots = 0;
                 foreach (SlotGroup g in groups) slots += g.Slots.Length;

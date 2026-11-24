@@ -33,10 +33,8 @@ namespace TidyUp.Hints
         [Header("Ghosts")]
         [Tooltip("Ghosts only show within this distance of the player (thousands of slots, few on screen).")]
         [SerializeField] private float _ghostRadius = 4f;
-        [SerializeField] private float _ghostCheckInterval = 0.2f;
 
         private readonly List<ItemSlot> _ghostSlots = new List<ItemSlot>();
-        private float _nextGhostCheck;
 
         private void Awake()
         {
@@ -57,18 +55,34 @@ namespace TidyUp.Hints
             }
         }
 
+        private Vector3[] _ghostPositions;
+        private int _ghostCursor;
+        private const int GhostChecksPerFrame = 600;
+
+        /// <summary>
+        /// Shows ghosts only near the player. Slots don't move, so their positions are cached once, and a slice of
+        /// slots is checked each frame (round robin) instead of every slot at once: thousands of slots per room
+        /// never land on a single frame.
+        /// </summary>
         private void Update()
         {
-            if (Time.unscaledTime < _nextGhostCheck) return;
-            _nextGhostCheck = Time.unscaledTime + _ghostCheckInterval;
+            int count = _ghostSlots.Count;
+            if (count == 0) return;
             Transform player = GameServices.Player;
             if (player == null) return;
+            if (_ghostPositions == null || _ghostPositions.Length != count)
+            {
+                _ghostPositions = new Vector3[count];
+                for (int i = 0; i < count; i++) _ghostPositions[i] = _ghostSlots[i].SnapPoint.position;
+            }
             Vector3 p = player.position;
             float r2 = _ghostRadius * _ghostRadius;
-            for (int i = 0; i < _ghostSlots.Count; i++)
+            int checks = Mathf.Min(count, GhostChecksPerFrame);
+            for (int n = 0; n < checks; n++)
             {
-                ItemSlot slot = _ghostSlots[i];
-                slot.SetGhostNear((slot.SnapPoint.position - p).sqrMagnitude <= r2);
+                if (_ghostCursor >= count) _ghostCursor = 0;
+                int i = _ghostCursor++;
+                _ghostSlots[i].SetGhostNear((_ghostPositions[i] - p).sqrMagnitude <= r2);
             }
         }
 

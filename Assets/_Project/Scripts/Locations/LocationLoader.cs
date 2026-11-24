@@ -82,6 +82,7 @@ namespace TidyUp.Locations
             }
 
             _loaded = handle;
+            SceneBatcher.Batch(handle.Result.Scene); // the building, shelves and decor into a few draw calls
             _hasLoaded = true;
             _returnPoint = returnPoint;
             if (_streetRoot != null) _streetRoot.SetActive(false);
