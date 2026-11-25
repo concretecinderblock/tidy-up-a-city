@@ -327,3 +327,10 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - the lift stays out of static batching (its car moves)
 - **Map:** shows the floor you're on (rooms, names, fixtures; the street door only on the ground floor), marks the lift on every floor, and puts the floor name in the caption and the full map's title.
 - **Loading:** everything stays loaded behind the entry fade (`_keepAllLoadedUpTo` raised to 36,000). Entering takes about 17 s in the Editor. Upstairs runs at about 12 ms per frame (9k draws) in the Editor.
+- **Fixes (2026-11-25; Jesse: no dust bunnies on the first floor; both floors loaded at once):**
+  - **Bunnies:** spots were filtered by absolute height (0.1–2 m), so every first-floor fixture (6.2 m up) had none and "cleaned itself". Heights now count from the fixture's own floor.
+  - **Loading by floor:**
+    - Entering loads only the entrance floor (12 s in the Editor again). Rooms on other floors never load by distance.
+    - Riding the lift to another floor: partway up, the screen dims ("Going up to the First floor…"); `MegaLocation.SwitchFloor` loads that floor, then unloads the one left behind (rooms whose items you carry stay), and the ride finishes.
+    - `_keepAllLoadedUpTo` now applies per floor (30,000).
+    - Tested in Play mode: ground 6/6 and first 0/6 on entering; 0/6 and 6/6 after riding up; back to 6/6 and 0/6 after riding down.

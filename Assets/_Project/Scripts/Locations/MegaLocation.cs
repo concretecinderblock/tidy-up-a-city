@@ -46,9 +46,9 @@ namespace TidyUp.Locations
         [SerializeField] private float _loadDistance = 20f;
         [Tooltip("Extra distance before a loaded room unloads again (so it doesn't flicker at the edge).")]
         [SerializeField] private float _unloadHysteresis = 8f;
-        [Tooltip("Locations up to this many items load every room behind the entry fade and keep them (no load or " +
-                 "unload hitches while walking). Bigger ones stream rooms by distance.")]
-        [SerializeField] private int _keepAllLoadedUpTo = 36000;
+        [Tooltip("A floor with up to this many items loads every room at once and keeps them (no load or " +
+                 "unload hitches while walking). Bigger floors stream rooms by distance. Other floors load with the lift.")]
+        [SerializeField] private int _keepAllLoadedUpTo = 30000;
         [Tooltip("Outline of the floor for the map (world XZ).")]
         [SerializeField] private Rect _footprint;
         [Tooltip("Doorways between rooms (world XZ centre), drawn on the map.")]
@@ -210,16 +210,22 @@ namespace TidyUp.Locations
             _wasComplete = complete;
         }
 
-        /// <summary>Loads rooms near the player, unloads rooms far away (but never one whose items are carried).</summary>
+        /// <summary>
+        /// Loads rooms near the player, unloads rooms far away (but never one whose items are carried). Only rooms on
+        /// the current floor: another floor loads when the lift takes the player there (SwitchFloor). A floor small
+        /// enough to keep whole stays loaded as a whole.
+        /// </summary>
         private void Stream(Vector3 position)
         {
+            if (KeepFloorLoaded(_currentFloor)) return; // the whole floor is already in
             var p = new Vector2(position.x, position.z);
             for (int i = 0; i < _runtime.Length; i++)
             {
                 Zone z = _runtime[i];
-                float distance = DistanceToRect(z.Info.Area, p) + Mathf.Abs(z.Info.Floor - FloorAt(position.y)) * 20f;
+                if (z.Info.Floor != _currentFloor) continue;
+                float distance = DistanceToRect(z.Info.Area, p);
                 if (distance <= _loadDistance && z.State == ZoneState.Unloaded) StartCoroutine(LoadZone(z));
-                else if (!KeepAllLoaded && distance > _loadDistance + _unloadHysteresis && z.State == ZoneState.Loaded && i != _activeZone && !CarriesFrom(z))
+                else if (distance > _loadDistance + _unloadHysteresis && z.State == ZoneState.Loaded && i != _activeZone && !CarriesFrom(z))
                     StartCoroutine(UnloadZone(z));
             }
         }
@@ -301,34 +307,73 @@ namespace TidyUp.Locations
                 if (_runtime[i].Runtime == runtime) _runtime[i].Runtime = null;
         }
 
-        /// <summary>Small enough to hold every room at once (see _keepAllLoadedUpTo).</summary>
-        public bool KeepAllLoaded => Total <= _keepAllLoadedUpTo;
+        private int _currentFloor;
+
+        /// <summary>The floor whose rooms are loaded (the player's floor once a lift ride is over).</summary>
+        public int CurrentFloor => _currentFloor;
+
+        public int FloorTotal(int floor)
+        {
+            int total = 0;
+            for (int i = 0; i < _zones.Length; i++) if (_zones[i].Floor == floor) total += _zones[i].TotalSlots;
+            return total;
+        }
+
+        /// <summary>Small enough to hold every room of this floor at once (see _keepAllLoadedUpTo).</summary>
+        public bool KeepFloorLoaded(int floor) => FloorTotal(floor) <= _keepAllLoadedUpTo;
 
         /// <summary>
-        /// Waits until the rooms are in (the loader keeps the screen faded until then): every room when the location
-        /// is small enough to keep them all, otherwise the room at the entrance and its neighbours.
+        /// Waits until the floor at the entrance is in (the loader keeps the screen faded until then): all its rooms when
+        /// the floor is small enough to keep whole, otherwise the room at the entrance and its neighbours. Other floors
+        /// stay unloaded until the lift goes there.
         /// </summary>
         public IEnumerator WaitUntilReady(Vector3 playerPosition, float timeout = 60f)
         {
-            if (KeepAllLoaded)
-            {
-                foreach (Zone z in _runtime)
-                    if (z.State == ZoneState.Unloaded) StartCoroutine(LoadZone(z));
-            }
-            else Stream(playerPosition);
-            int zone = ZoneAt(playerPosition);
+            _currentFloor = FloorAt(playerPosition.y);
+            LoadFloor(_currentFloor, playerPosition);
             float until = Time.unscaledTime + timeout;
-            while (Time.unscaledTime < until && !Ready(zone)) yield return null;
+            while (Time.unscaledTime < until && !FloorReady(_currentFloor, playerPosition)) yield return null;
         }
 
-        private bool Ready(int entranceZone)
+        /// <summary>
+        /// Moving to another floor (the lift): loads that floor's rooms, waits for them, then unloads the floor left
+        /// behind (except rooms whose items the player carries: items never leave their scene).
+        /// </summary>
+        public IEnumerator SwitchFloor(int floor, Vector3 arrival, float timeout = 60f)
         {
-            if (KeepAllLoaded)
+            LoadFloor(floor, arrival);
+            float until = Time.unscaledTime + timeout;
+            while (Time.unscaledTime < until && !FloorReady(floor, arrival)) yield return null;
+            _currentFloor = floor;
+            foreach (Zone z in _runtime)
             {
-                foreach (Zone z in _runtime) if (z.State != ZoneState.Loaded || z.Runtime == null) return false;
+                if (z.Info.Floor == floor || z.State != ZoneState.Loaded || CarriesFrom(z)) continue;
+                yield return UnloadZone(z);
+            }
+        }
+
+        private void LoadFloor(int floor, Vector3 near)
+        {
+            bool whole = KeepFloorLoaded(floor);
+            var p = new Vector2(near.x, near.z);
+            foreach (Zone z in _runtime)
+            {
+                if (z.Info.Floor != floor || z.State != ZoneState.Unloaded) continue;
+                if (whole || DistanceToRect(z.Info.Area, p) <= _loadDistance) StartCoroutine(LoadZone(z));
+            }
+        }
+
+        /// <summary>Are the rooms of a floor in: all of them when the floor is kept whole, else the one at the given spot.</summary>
+        public bool FloorReady(int floor, Vector3 at)
+        {
+            if (KeepFloorLoaded(floor))
+            {
+                foreach (Zone z in _runtime)
+                    if (z.Info.Floor == floor && (z.State != ZoneState.Loaded || z.Runtime == null)) return false;
                 return true;
             }
-            return entranceZone < 0 || (_runtime[entranceZone].State == ZoneState.Loaded && _runtime[entranceZone].Runtime != null);
+            int zone = ZoneAt(new Vector3(at.x, FloorHeight(floor), at.z));
+            return zone < 0 || (_runtime[zone].State == ZoneState.Loaded && _runtime[zone].Runtime != null);
         }
 
         /// <summary>Sets carried items down by the entrance. Returns how many.</summary>

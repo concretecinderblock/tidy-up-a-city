@@ -176,6 +176,7 @@ namespace TidyUp.Mechanics.Cleaning
             _bunnySpots.Clear();
             if (_gatedGroup == null) return;
             Vector3 centre = _gatedGroup.transform.position;
+            float baseY = centre.y; // heights count from the fixture's own floor (the first floor is 6 m up)
 
             // Front row only: on deep shelves, a bunny in the back row hides behind the board above it.
             // "Front" is per facing direction, so every slot of a round stand still counts.
@@ -200,7 +201,7 @@ namespace TidyUp.Mechanics.Cleaning
                 Vector3 toViewer = viewer - spot;
                 toViewer.y = 0f;
                 if (Vector3.Dot(front, toViewer.normalized) < minFacing) continue; // facing away from the player
-                if (spot.y < 0.1f || spot.y > maxHeight) continue;            // out of easy reach
+                if (spot.y - baseY < 0.1f || spot.y - baseY > maxHeight) continue; // out of easy reach
                 _bunnySpots.Add(spot);
             }
             for (int i = _bunnySpots.Count - 1; i > 0; i--)

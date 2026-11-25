@@ -150,6 +150,23 @@ namespace TidyUp.Locations
             return null;
         }
 
+
+        /// <summary>
+        /// Fades the screen, runs some loading work (a lift loading the next floor), and fades back, with a short note
+        /// on the fade. Gameplay input is blocked meanwhile.
+        /// </summary>
+        public IEnumerator Cover(IEnumerator work, string note)
+        {
+            SetBlocked(true);
+            UnityEngine.UI.Text label = _fade != null ? _fade.GetComponentInChildren<UnityEngine.UI.Text>(true) : null;
+            string previous = label != null ? label.text : null;
+            if (label != null && !string.IsNullOrEmpty(note)) label.text = note;
+            yield return Fade(1f);
+            yield return work;
+            yield return Fade(0f);
+            if (label != null) label.text = previous;
+            SetBlocked(false);
+        }
         private static LocationRuntime FindRuntime(Scene scene)
         {
             foreach (GameObject root in scene.GetRootGameObjects())

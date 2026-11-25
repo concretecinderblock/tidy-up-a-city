@@ -61,9 +61,22 @@ namespace TidyUp.Locations
             float from = _car.position.y, to = _stops[target];
             float duration = Mathf.Max(1.5f, Mathf.Abs(to - from) / _speed);
             float time = 0f, lastY = from;
+            // Riding to another floor of a mega location: partway up, the screen dims while that floor's rooms load
+            // and the floor left behind unloads (only one floor is in memory at a time).
+            MegaLocation building = MegaLocation.Current;
+            bool switchFloor = rider != null && building != null && building.CurrentFloor != target;
             while (time < duration)
             {
-                time += Time.deltaTime;
+                if (switchFloor && time >= duration * 0.35f)
+                {
+                    switchFloor = false;
+                    Vector3 arrival = new Vector3(_car.position.x, _stops[target], _car.position.z);
+                    IEnumerator work = building.SwitchFloor(target, arrival);
+                    string note = target > _floor ? $"Going up to the {FloorName(target)}…" : $"Going down to the {FloorName(target)}…";
+                    if (GameServices.Loader != null) yield return GameServices.Loader.Cover(work, note);
+                    else yield return work;
+                }
+                time += Mathf.Min(Time.deltaTime, 0.05f); // no jump after a loading frame
                 float y = Mathf.Lerp(from, to, Mathf.SmoothStep(0f, 1f, time / duration));
                 MoveCar(y - lastY, rider);
                 lastY = y;
