@@ -24,6 +24,8 @@ namespace TidyUp.Locations
         [Tooltip("Slots in the zone (recorded by the builder), so the grand total is known before a room is visited.")]
         public int TotalSlots;
         public Color MapColor = new Color(0.9f, 0.8f, 0.65f);
+        [Tooltip("Which floor the room is on (0 = ground floor).")]
+        public int Floor;
     }
 
     /// <summary>
@@ -46,11 +48,19 @@ namespace TidyUp.Locations
         [SerializeField] private float _unloadHysteresis = 8f;
         [Tooltip("Locations up to this many items load every room behind the entry fade and keep them (no load or " +
                  "unload hitches while walking). Bigger ones stream rooms by distance.")]
-        [SerializeField] private int _keepAllLoadedUpTo = 30000;
+        [SerializeField] private int _keepAllLoadedUpTo = 36000;
         [Tooltip("Outline of the floor for the map (world XZ).")]
         [SerializeField] private Rect _footprint;
         [Tooltip("Doorways between rooms (world XZ centre), drawn on the map.")]
         [SerializeField] private Vector2[] _doorways = Array.Empty<Vector2>();
+        [Tooltip("Height of each floor's walking surface (index = floor), lowest first.")]
+        [SerializeField] private float[] _floorHeights = { 0f };
+        [Tooltip("Floor names for the map, lowest first.")]
+        [SerializeField] private string[] _floorNames = { "Ground floor" };
+        [Tooltip("Lift shafts (world XZ), drawn on the map on every floor.")]
+        [SerializeField] private Rect[] _lifts = Array.Empty<Rect>();
+
+        public IReadOnlyList<Rect> Lifts => _lifts;
 
         private enum ZoneState { Unloaded, Loading, Loaded, Unloading }
 
@@ -131,9 +141,23 @@ namespace TidyUp.Locations
         public int ZoneAt(Vector3 position)
         {
             var p = new Vector2(position.x, position.z);
+            int floor = FloorAt(position.y);
             for (int i = 0; i < _zones.Length; i++)
-                if (_zones[i].Area.Contains(p)) return i;
+                if (_zones[i].Floor == floor && _zones[i].Area.Contains(p)) return i;
             return -1;
+        }
+
+        public int FloorCount => _floorHeights.Length;
+        public float FloorHeight(int floor) => _floorHeights[Mathf.Clamp(floor, 0, _floorHeights.Length - 1)];
+        public string FloorName(int floor) => floor >= 0 && floor < _floorNames.Length ? _floorNames[floor] : $"Floor {floor + 1}";
+
+        /// <summary>The floor a height belongs to: the highest floor whose surface is at most half a metre above it.</summary>
+        public int FloorAt(float y)
+        {
+            int floor = 0;
+            for (int i = 1; i < _floorHeights.Length; i++)
+                if (y >= _floorHeights[i] - 0.5f) floor = i;
+            return floor;
         }
 
         private void Awake()
@@ -193,7 +217,7 @@ namespace TidyUp.Locations
             for (int i = 0; i < _runtime.Length; i++)
             {
                 Zone z = _runtime[i];
-                float distance = DistanceToRect(z.Info.Area, p);
+                float distance = DistanceToRect(z.Info.Area, p) + Mathf.Abs(z.Info.Floor - FloorAt(position.y)) * 20f;
                 if (distance <= _loadDistance && z.State == ZoneState.Unloaded) StartCoroutine(LoadZone(z));
                 else if (!KeepAllLoaded && distance > _loadDistance + _unloadHysteresis && z.State == ZoneState.Loaded && i != _activeZone && !CarriesFrom(z))
                     StartCoroutine(UnloadZone(z));
@@ -335,7 +359,7 @@ namespace TidyUp.Locations
         }
 
         internal void EditorConfigure(LocationDefinition location, ZoneInfo[] zones, Transform entryPoint, Transform dropPoint,
-            Rect footprint, Vector2[] doorways)
+            Rect footprint, Vector2[] doorways, float[] floorHeights = null, string[] floorNames = null, Rect[] lifts = null)
         {
             _location = location;
             _zones = zones ?? Array.Empty<ZoneInfo>();
@@ -343,6 +367,9 @@ namespace TidyUp.Locations
             _dropPoint = dropPoint;
             _footprint = footprint;
             _doorways = doorways ?? Array.Empty<Vector2>();
+            _floorHeights = floorHeights != null && floorHeights.Length > 0 ? floorHeights : new[] { 0f };
+            _floorNames = floorNames ?? new[] { "Ground floor" };
+            _lifts = lifts ?? Array.Empty<Rect>();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

@@ -33,3 +33,28 @@ jar_jam,Strawberry Jam,bakery,jar_jam,A,Common,false,,,jar,0.07;0.09;0.07,#C0283
 jar_honey,Honey,bakery,jar_honey,A,Common,false,,,jar,0.07;0.09;0.07,#E8A317
 sack_flour,Flour Sack,bakery,sack_flour,A,Common,false,,,sack,0.3;0.36;0.22,#EFE6D2
 sack_sugar,Sugar Sack,bakery,sack_sugar,A,Common,false,,,sack,0.26;0.3;0.2,#D9C9A8
+# First floor (reached by the lift), 2026-11-25
+# Tea Room
+tea_cup,Tea Cup,bakery,up_teacup,A,Common,false,,,cup,0.09;0.07;0.09,#F4F1EA
+tea_scone,Scone,bakery,up_scone,A,Common,false,,,bun,0.09;0.06;0.09,#D8A866
+tea_tart,Fruit Tart,bakery,up_tart,A,Common,false,,,pie,0.12;0.04;0.12,#C8453C
+# Celebration Cakes
+cake_chocolate,Chocolate Cake,bakery,up_cake_choc,A,Uncommon,false,,,cake,0.22;0.14;0.22,#5A3420
+cake_strawberry,Strawberry Cake,bakery,up_cake_straw,A,Uncommon,false,,,cake,0.22;0.14;0.22,#F2A0B5
+cake_birthday,Birthday Cake,bakery,up_cake_bday,A,Uncommon,false,,,cake,0.24;0.16;0.24,#9FD3E6
+# Chocolate Room
+choc_bar,Chocolate Bar,bakery,up_chocbar,A,Common,false,,,cube,0.14;0.02;0.06,#4A2A18
+choc_truffle,Chocolate Truffle,bakery,up_truffle,A,Common,false,,,sphere,0.045;0.045;0.045,#3B2214
+choc_egg,Chocolate Egg,bakery,up_chocegg,A,Common,false,,,egg,0.07;0.09;0.07,#6B3E22
+# Biscuit Tins
+tin_biscuit,Biscuit Tin,bakery,up_biscuittin,A,Common,false,,,cylinder,0.16;0.08;0.16,#2E6B8A
+cookie_oat,Oat Cookie,bakery,up_oatcookie,A,Common,false,,,cookie,0.08;0.015;0.08,#C9A06A
+biscuit_wafer,Wafer,bakery,up_wafer,A,Common,false,,,cube,0.1;0.02;0.04,#EBCB8B
+# Spice Loft
+jar_cinnamon,Cinnamon Jar,bakery,up_jar_cinnamon,A,Common,false,,,jar,0.06;0.08;0.06,#8A4B24
+jar_vanilla,Vanilla Jar,bakery,up_jar_vanilla,A,Common,false,,,jar,0.06;0.08;0.06,#E9DDB0
+egg_fresh,Fresh Egg,bakery,up_egg,A,Common,false,,,egg,0.045;0.06;0.045,#E8D2B4
+# Bakeware Store
+tin_cake,Cake Tin,bakery,up_caketin,A,Common,false,,,cylinder,0.2;0.07;0.2,#9EA3A8
+tray_baking,Baking Tray,bakery,up_tray,A,Common,false,,,cube,0.3;0.02;0.22,#7A7F85
+bowl_mixing,Mixing Bowl,bakery,up_bowl,A,Common,false,,,cup,0.18;0.1;0.18,#E6E2D8

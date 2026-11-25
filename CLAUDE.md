@@ -46,7 +46,7 @@ If you think something here is wrong, say so and explain; don't silently switch 
 - Same seed = same mess. Save the seed plus player progress, not every item transform.
 
 ### Locations are instanced
-- A persistent `City` scene (streets, map, player, managers) plus, per location, a **shell scene** (the building, loaded on entry) and **zone scenes** (its rooms) that stream in and out as the player moves (`MegaLocation`). Every zone counts towards the location's grand total; each item kind lives in one zone. A building map (corner minimap + full map on M) guides the player. (Mega locations, 2026-11-13.)
+- A persistent `City` scene (streets, map, player, managers) plus, per location, a **shell scene** (the building, loaded on entry) and **zone scenes** (its rooms, on one or more floors linked by lifts) that stream in and out as the player moves (`MegaLocation`). Every zone counts towards the location's grand total; each item kind lives in one zone. A building map (corner minimap + full map on M) guides the player. (Mega locations, 2026-11-13.)
 - Entering a location loads its scene; leaving unloads it.
 - **Hard-binding:** a location only spawns its own items. Items can never physically leave their location.
 - **City Post exception:** "stray" items are dropped in a Lost & Found box, stored as data (item id + target location), and spawn as a delivery task at their true location. Never move GameObjects between scenes.

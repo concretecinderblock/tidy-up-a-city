@@ -47,7 +47,8 @@ namespace TidyUp.Locations
                 && root.GetComponentInChildren<MemoryFragment>(true) == null
                 && root.GetComponentInChildren<RestorationStage>(true) == null
                 && root.GetComponentInChildren<ParticleSystem>(true) == null
-                && root.GetComponentInChildren<Animator>(true) == null;
+                && root.GetComponentInChildren<Animator>(true) == null
+                && root.GetComponentInChildren<Elevator>(true) == null; // the lift car moves
         }
     }
 }

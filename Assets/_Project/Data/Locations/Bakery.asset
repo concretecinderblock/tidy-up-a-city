@@ -18,6 +18,8 @@ MonoBehaviour:
   _sceneName: Location_Bakery
   _mechanicFamilies: 00000000i
   _items:
+  - {fileID: 11400000, guid: cc9dec0a5ea1d85498369b6464138886, type: 2}
+  - {fileID: 11400000, guid: 114cb6f89bf52824d9ffcac764565450, type: 2}
   - {fileID: 11400000, guid: a08ddfdb46ad909428708d7f0b0b027d, type: 2}
   - {fileID: 11400000, guid: 5976a640d2eddcb4aa600c4a9e400371, type: 2}
   - {fileID: 11400000, guid: c63c145062d87f14aa0daf605a1bdba5, type: 2}
@@ -25,17 +27,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e2a8113ee48406940ad2762187dd8f65, type: 2}
   - {fileID: 11400000, guid: 4cf9fb92553ea894c9b780e36a0ff9d5, type: 2}
   - {fileID: 11400000, guid: 290df6e7cfaeec14db578f67eec980ef, type: 2}
+  - {fileID: 11400000, guid: ae3ef9426a731c04f961b4cee635b89b, type: 2}
+  - {fileID: 11400000, guid: f97724426c7c77b4d8328e5e458d6f9a, type: 2}
   - {fileID: 11400000, guid: 14960859debe5864d92f737d845740dc, type: 2}
   - {fileID: 11400000, guid: e7a17461825e3c6418637cdfb627041a, type: 2}
   - {fileID: 11400000, guid: 5d6c7c3f92b6b5f49919e398e09b5e7b, type: 2}
   - {fileID: 11400000, guid: 7859e9b79e1e12c47a6b01ff130b42d6, type: 2}
   - {fileID: 11400000, guid: 3a92cbbf57f374c4b9f9ea875965490c, type: 2}
   - {fileID: 11400000, guid: 13e025038b6b3e644a2f95a49ecfba1c, type: 2}
+  - {fileID: 11400000, guid: 45236564fbdcb35498b6b6df9de4dfc6, type: 2}
+  - {fileID: 11400000, guid: 598fbf603bfbb6b4eab4a2b7981cbd42, type: 2}
+  - {fileID: 11400000, guid: 81ff81b686050744c80df104358f3d9d, type: 2}
+  - {fileID: 11400000, guid: 7d40545bbd77037439ec01c14525186f, type: 2}
   - {fileID: 11400000, guid: e76b880b6ece6b2499ceb707c2a18f79, type: 2}
   - {fileID: 11400000, guid: b86f6013afc54ae4b8043facddab5b79, type: 2}
+  - {fileID: 11400000, guid: 6944f188a7a300447a28a0828ba542a5, type: 2}
   - {fileID: 11400000, guid: 14747baa06913ba48874f9386e3ee264, type: 2}
+  - {fileID: 11400000, guid: e539d283abdf48f4daa72861b23edbab, type: 2}
+  - {fileID: 11400000, guid: c210fd342845c47458b0edd21a6e34cc, type: 2}
   - {fileID: 11400000, guid: 81f28ea8618957c49af5deb7d32cfdc5, type: 2}
   - {fileID: 11400000, guid: 8cd445dfb8b25b34cbeaf5d70370124a, type: 2}
+  - {fileID: 11400000, guid: ade608bd0063c2e4787a4ec1c9345f04, type: 2}
   - {fileID: 11400000, guid: ef9afce03971da64c931c1140fbb05f5, type: 2}
   - {fileID: 11400000, guid: c84884d65fda1b54ba40b56735b00345, type: 2}
   - {fileID: 11400000, guid: 68a4c3734de4df944878f23f4ce3c819, type: 2}
@@ -44,7 +56,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 55b7482e8efcba149957411173b1f856, type: 2}
   - {fileID: 11400000, guid: ce526a0480ed7d641ba69421dbbc91fc, type: 2}
   - {fileID: 11400000, guid: e9f8aba4092b88e42931d4e8e0e3273d, type: 2}
+  - {fileID: 11400000, guid: fd40c07215dafc84aa4ffc6636f06a75, type: 2}
+  - {fileID: 11400000, guid: 4c490d7ac7b1b82458311906fd0824c4, type: 2}
+  - {fileID: 11400000, guid: 01524f1492fe4d843952ab119ffb4ce5, type: 2}
+  - {fileID: 11400000, guid: 4d47b9eab2474f4439de6e9ab0c5cb1b, type: 2}
+  - {fileID: 11400000, guid: b00311582f04161499c0d8fe12f2c8b3, type: 2}
+  - {fileID: 11400000, guid: 19fffdb2248e8c54d8ee94ab5c945577, type: 2}
   _memory: {fileID: 11400000, guid: 389be551a6b46064cace541897d6c564, type: 2}
-  _totalSlots: 19965
+  _totalSlots: 32305
   _muddleSeed: 1234
   _muddleFraction: 1

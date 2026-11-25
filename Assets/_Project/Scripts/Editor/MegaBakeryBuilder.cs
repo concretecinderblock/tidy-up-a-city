@@ -24,7 +24,13 @@ namespace TidyUp.Editor
     {
         private const string ShellScenePath = BakeryGreyboxBuilder.LocationScenePath;
         private const string ZoneFolder = "Assets/_Project/Scenes/Locations/Bakery";
-        private const float Ceiling = 6f;
+        private const float Ceiling = 6f;          // ground floor height
+        private const float UpperY = 6.2f;         // the first floor's walking surface (ground ceiling + slab)
+        private const float UpperCeiling = 5f;     // first floor height
+        private static readonly float[] FloorHeights = { 0f, UpperY };
+        private static readonly string[] FloorNames = { "Ground floor", "First floor" };
+        // The lift: shaft in the Shop Hall's north-west corner, against the partition, open to the south.
+        private static readonly Rect LiftShaft = new Rect(-7.9f, -3.05f, 2.8f, 2.8f);
         private const float Face = 9.75f; // a room's inner wall faces, from its centre
         private static readonly Vector2 FloorSize = new Vector2(60f, 40f);
 
@@ -36,6 +42,9 @@ namespace TidyUp.Editor
             public Art.TextureSet Inlay;
             public Color InlayColor;
             public Action<Room> Build;
+            public int Floor;
+            public float FloorY => FloorHeights[Floor];
+            public float CeilingHeight => Floor == 0 ? Ceiling : UpperCeiling;
             public string ScenePath => $"{ZoneFolder}/Bakery_{Id}.unity";
             public string Address => $"{BakeryGreyboxBuilder.LocationAddress}_{Id}";
             public Rect Area => new Rect(Centre.x - 10f, Centre.y - 10f, 20f, 20f);
@@ -55,6 +64,19 @@ namespace TidyUp.Editor
                 Inlay = Art.TextureSet.Planks, InlayColor = new Color(0.55f, 0.4f, 0.28f), Build = BuildPantry },
             new ZoneSpec { Id = "bakehouse", Name = "Bakehouse", Centre = new Vector2(20f, 10f), MapColor = new Color(0.95f, 0.62f, 0.45f),
                 Inlay = Art.TextureSet.Stone, InlayColor = new Color(0.7f, 0.64f, 0.56f), Build = BuildBakehouse },
+            // First floor (reached by the lift), right above the rooms below.
+            new ZoneSpec { Id = "tea_room", Name = "Tea Room", Floor = 1, Centre = new Vector2(0f, -10f), MapColor = new Color(0.82f, 0.9f, 0.8f),
+                Inlay = Art.TextureSet.Parquet, InlayColor = new Color(0.66f, 0.46f, 0.3f), Build = BuildTeaRoom },
+            new ZoneSpec { Id = "celebration", Name = "Celebration Cakes", Floor = 1, Centre = new Vector2(0f, 10f), MapColor = new Color(0.98f, 0.8f, 0.86f),
+                Inlay = Art.TextureSet.Tiles, InlayColor = new Color(0.9f, 0.78f, 0.74f), Build = BuildCelebration },
+            new ZoneSpec { Id = "chocolate", Name = "Chocolate Room", Floor = 1, Centre = new Vector2(-20f, -10f), MapColor = new Color(0.78f, 0.62f, 0.5f),
+                Inlay = Art.TextureSet.Parquet, InlayColor = new Color(0.45f, 0.3f, 0.2f), Build = BuildChocolate },
+            new ZoneSpec { Id = "biscuit_tins", Name = "Biscuit Tins", Floor = 1, Centre = new Vector2(20f, -10f), MapColor = new Color(0.7f, 0.82f, 0.92f),
+                Inlay = Art.TextureSet.Tiles, InlayColor = new Color(0.62f, 0.72f, 0.78f), Build = BuildBiscuitTins },
+            new ZoneSpec { Id = "spice_loft", Name = "Spice Loft", Floor = 1, Centre = new Vector2(-20f, 10f), MapColor = new Color(0.92f, 0.8f, 0.6f),
+                Inlay = Art.TextureSet.Planks, InlayColor = new Color(0.6f, 0.44f, 0.3f), Build = BuildSpiceLoft },
+            new ZoneSpec { Id = "bakeware", Name = "Bakeware Store", Floor = 1, Centre = new Vector2(20f, 10f), MapColor = new Color(0.8f, 0.8f, 0.84f),
+                Inlay = Art.TextureSet.Stone, InlayColor = new Color(0.66f, 0.66f, 0.68f), Build = BuildBakeware },
         };
 
         /// <summary>Doorways between rooms: world XZ centre, and whether the wall runs along X (else along Z).</summary>
@@ -111,16 +133,16 @@ namespace TidyUp.Editor
                 Scene scene = LocationKit.NewScene(withSun: false);
                 var room = new Room(spec, AssetDatabase.LoadAssetAtPath<LocationDefinition>(BakeryGreyboxBuilder.LocationAssetPath), p, glass);
                 spec.Build(room);
-                BoxCollider scatter = LocationKit.BuildScatterArea(new Vector3(spec.Centre.x, 0.7f, spec.Centre.y), new Vector3(18.6f, 1.4f, 18.6f));
+                BoxCollider scatter = LocationKit.BuildScatterArea(new Vector3(spec.Centre.x, spec.FloorY + 0.7f, spec.Centre.y), new Vector3(18.6f, 1.4f, 18.6f));
                 SlotGroup[] groups = room.Groups.ToArray();
-                LocationKit.BuildZoneSystems(room.Location, spec.Id, spec.Name, groups, new[] { scatter }, spec.Area, p);
+                LocationKit.BuildZoneSystems(room.Location, spec.Id, spec.Name, groups, new[] { scatter }, spec.Area, p, spec.FloorY);
                 // The mess stays out of the decorations (no items inside sacks, cakes or plants, or in the ovens).
                 var muddle = UnityEngine.Object.FindAnyObjectByType<Muddle.MuddleScatterer>();
                 if (muddle != null) muddle.EditorSetKeepClear(KeepClear(room, spec));
                 int slots = 0;
                 foreach (SlotGroup g in groups) slots += g.Slots.Length;
                 grandTotal += slots;
-                infos.Add(new ZoneInfo { Id = spec.Id, DisplayName = spec.Name, Address = spec.Address, Area = spec.Area, TotalSlots = slots, MapColor = spec.MapColor });
+                infos.Add(new ZoneInfo { Id = spec.Id, DisplayName = spec.Name, Address = spec.Address, Area = spec.Area, TotalSlots = slots, MapColor = spec.MapColor, Floor = spec.Floor });
                 LocationKit.SaveScene(scene, spec.ScenePath);
                 Debug.Log($"[Tidy Up] Built {spec.ScenePath}: {slots} slots.");
             }
@@ -158,10 +180,13 @@ namespace TidyUp.Editor
                     if (!any) b = collider.bounds; else b.Encapsulate(collider.bounds);
                     any = true;
                 }
-                if (!any || b.min.y > 1f) continue; // hanging pans and herbs leave the floor free
+                if (!any || b.min.y > spec.FloorY + 1f) continue; // hanging pans and herbs leave the floor free
                 b.Expand(new Vector3(0.2f, 0f, 0.2f));
                 result.Add(b);
             }
+            // The lift shaft stands in the Shop Hall and the Tea Room above it.
+            if (spec.Floor == 0 ? spec.Id == "shop_hall" : spec.Id == "tea_room")
+                result.Add(new Bounds(new Vector3(LiftShaft.center.x, spec.FloorY + 1.5f, LiftShaft.center.y - 0.6f), new Vector3(LiftShaft.width + 1f, 3f, LiftShaft.height + 1.6f)));
             if (spec.Id == "bakehouse")
                 foreach (float z in OvenZ) result.Add(new Bounds(new Vector3(28.9f, 1.5f, z), new Vector3(2.8f, 3f, 3.8f)));
             return result.ToArray();
@@ -193,7 +218,7 @@ namespace TidyUp.Editor
                 Decor = new GameObject("Room Decor").transform;
             }
 
-            public Vector3 World(float x, float z) => new Vector3(Spec.Centre.x + x, 0f, Spec.Centre.y + z);
+            public Vector3 World(float x, float z) => new Vector3(Spec.Centre.x + x, Spec.FloorY, Spec.Centre.y + z);
 
             public SlotGroup Add(SlotGroup group)
             {
@@ -458,6 +483,130 @@ namespace TidyUp.Editor
             Rug(r, -1f, -5f, new Vector2(8f, 3f), new Color(0.7f, 0.6f, 0.45f));
         }
 
+        // ───────────── First floor (5 m ceilings; reached by the lift in the Tea Room) ─────────────
+
+        /// <summary>Tea cups in tall dresser cabinets, scones and fruit tarts in glass counters, tea tables.</summary>
+        private static void BuildTeaRoom(Room r)
+        {
+            ShelfSettings Dresser(int i) => Tall(Make(r, $"Tea Dresser {i + 1}", "Tea dresser", ShelfStyle.Bookcase, 6, 14, 2,
+                new Vector3(0.12f, 0.11f, 0.12f), new[] { "up_teacup" }, new[] { "Tea cups" }, 0.35f), 3.7f);
+            r.Row(Wall.W, -9.2f, 0.6f, 4, Dresser);
+            r.Row(Wall.E, -0.6f, 8.6f, 3, i => Dresser(i + 4));
+            ShelfSettings Counter(int k, int side) => Make(r, $"Tea Counter {(k == 0 ? "Scones" : "Tarts")} {side}", k == 0 ? "Scone counter" : "Tart counter",
+                ShelfStyle.Case, 4, 18, 3, new Vector3(0.13f, 0.1f, 0.13f), new[] { k == 0 ? "up_scone" : "up_tart" }, new[] { k == 0 ? "Scones" : "Fruit tarts" }, 0.55f);
+            int c = 0;
+            foreach (float z in new[] { 3.8f, -2f })
+            foreach (float x in new[] { -5f, 5f })
+            {
+                r.Island(x, z, Counter(c % 2, 1), Counter(c % 2, 2));
+                c++;
+            }
+            Material cloth = GreyboxAssets.Lit("Bakery_TeaCloth", new Color(0.9f, 0.95f, 0.92f));
+            foreach (float x in new[] { -5.5f, -1.8f, 1.8f, 5.5f })
+            {
+                Vector3 at = r.World(x, -8f);
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Tea Table", r.Decor, at + new Vector3(0f, 0.74f, 0f), new Vector3(0.8f, 0.02f, 0.8f), cloth);
+                LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Table Leg", r.Decor, at + new Vector3(0f, 0.37f, 0f), new Vector3(0.07f, 0.37f, 0.07f), r.P.Wood);
+                foreach (int side in new[] { -1, 1 })
+                {
+                    LocationKit.Furniture("Chair Seat", r.Decor, at + new Vector3(side * 0.65f, 0.45f, 0f), new Vector3(0.42f, 0.05f, 0.42f), r.P.Wood);
+                    LocationKit.Furniture("Chair Back", r.Decor, at + new Vector3(side * 0.85f, 0.72f, 0f), new Vector3(0.05f, 0.5f, 0.42f), r.P.Wood);
+                }
+                LocationKit.BuildFlowers(r.Decor, at + new Vector3(0f, 0.76f, 0f));
+            }
+            Rug(r, 0f, 1f, new Vector2(3f, 8f), new Color(0.4f, 0.58f, 0.5f));
+            Plant(r, 9f, -9f, 1.4f);
+        }
+
+        /// <summary>Big celebration cakes on tiered stands and in cake cabinets round the walls.</summary>
+        private static void BuildCelebration(Room r)
+        {
+            string[] kinds = { "up_cake_choc", "up_cake_straw", "up_cake_bday" };
+            string[] names = { "Chocolate cakes", "Strawberry cakes", "Birthday cakes" };
+            ShelfSettings Cabinet(int i) => Tall(Make(r, $"Cake Cabinet {names[i % 3]}", "Cake cabinet", ShelfStyle.Bookcase, 4, 6, 2,
+                new Vector3(0.28f, 0.22f, 0.28f), new[] { kinds[i % 3] }, new[] { names[i % 3] }, 0.35f), 3.7f);
+            r.Row(Wall.N, -9.2f, 9.2f, 8, Cabinet);
+            r.Row(Wall.W, -9.2f, 0.6f, 4, i => Cabinet(i + 1));
+            r.Row(Wall.E, -0.6f, 8.6f, 4, i => Cabinet(i + 2));
+            int s = 0;
+            foreach (float z in new[] { 3.5f, -1f, -5.5f })
+            foreach (float x in new[] { -5f, 0f, 5f })
+            {
+                if (x == 0f && z < -5f) continue; // keep the way to the Tea Room clear
+                r.Stand(new StandSettings
+                {
+                    Name = $"Celebration Stand {s + 1}", Label = "Cake stand", SlotsPerTier = new[] { 12, 9, 6 }, SlotSize = new Vector3(0.28f, 0.2f, 0.28f),
+                    TierSlotTypes = new[] { kinds[s % 3] }, TierLabels = new[] { names[s % 3] }, FrameMaterial = r.P.Wood, MarkerMaterial = r.P.Marker,
+                }, x, z);
+                s++;
+            }
+            WeddingCake(r, 0f, 8f); // the showpiece, in front of the north wall
+            Rug(r, 0f, -1f, new Vector2(14f, 12f), new Color(0.7f, 0.45f, 0.55f));
+        }
+
+        /// <summary>Chocolate bars in a long cabinet wall, truffles and chocolate eggs in glass counters.</summary>
+        private static void BuildChocolate(Room r)
+        {
+            r.Row(Wall.W, -9.2f, 9.2f, 5, i => Tall(Make(r, $"Chocolate Cabinet {i + 1}", "Chocolate cabinet", ShelfStyle.Bookcase, 8, 12, 2,
+                new Vector3(0.16f, 0.05f, 0.08f), new[] { "up_chocbar" }, new[] { "Chocolate bars" }, 0.45f), 3.6f));
+            ShelfSettings Counter(int k, int i) => Make(r, $"Chocolate Counter {(k == 0 ? "Truffles" : "Eggs")} {i}", k == 0 ? "Truffle counter" : "Egg counter",
+                ShelfStyle.Case, 4, k == 0 ? 30 : 20, 3, k == 0 ? new Vector3(0.07f, 0.06f, 0.07f) : new Vector3(0.1f, 0.12f, 0.1f),
+                new[] { k == 0 ? "up_truffle" : "up_chocegg" }, new[] { k == 0 ? "Truffles" : "Chocolate eggs" }, 0.55f);
+            r.Island(1f, 3.5f, Counter(0, 1), Counter(1, 1));
+            r.Island(1f, -3f, Counter(1, 2), Counter(0, 2));
+            Barrel(r, 8.6f, -8.6f);
+            Plant(r, 8.8f, 8.8f, 1.4f);
+            Rug(r, 1f, 0f, new Vector2(5f, 11f), new Color(0.42f, 0.25f, 0.18f));
+        }
+
+        /// <summary>Biscuit tins on display shelves, oat cookies in cabinets, wafers in glass counters.</summary>
+        private static void BuildBiscuitTins(Room r)
+        {
+            r.Row(Wall.E, -9.2f, 9.2f, 7, i => Tall(Make(r, $"Tin Shelf {i + 1}", "Tin shelf", ShelfStyle.Bookcase, 6, 12, 1,
+                new Vector3(0.18f, 0.1f, 0.18f), new[] { "up_biscuittin" }, new[] { "Biscuit tins" }, 0.35f), 3.6f));
+            r.Row(Wall.S, -9.2f, 8.4f, 3, i => Tall(Make(r, $"Oat Cookie Cabinet {i + 1}", "Cookie cabinet", ShelfStyle.Bookcase, 8, 20, 2,
+                new Vector3(0.1f, 0.06f, 0.1f), new[] { "up_oatcookie" }, new[] { "Oat cookies" }, 0.45f), 3.6f));
+            ShelfSettings Wafers(int i) => Make(r, $"Wafer Counter {i}", "Wafer counter", ShelfStyle.Case, 4, 22, 3,
+                new Vector3(0.12f, 0.04f, 0.06f), new[] { "up_wafer" }, new[] { "Wafers" }, 0.6f);
+            r.Island(-3f, 3f, Wafers(1), Wafers(2));
+            r.Island(-3f, -3f, Wafers(3), Wafers(4));
+            Crates(r, -8.8f, 6.5f);
+            Plant(r, -9f, -9f, 1.4f);
+        }
+
+        /// <summary>Spice jars up the walls, trays of fresh eggs, and herbs drying under the roof.</summary>
+        private static void BuildSpiceLoft(Room r)
+        {
+            ShelfSettings Spices(int i) => Tall(Make(r, $"Spice Shelf {i + 1}", "Spice shelf", ShelfStyle.Bookcase, 8, 26, 1,
+                new Vector3(0.08f, 0.11f, 0.08f), i % 2 == 0 ? new[] { "up_jar_cinnamon", "up_jar_vanilla" } : new[] { "up_jar_vanilla", "up_jar_cinnamon" },
+                i % 2 == 0 ? new[] { "Cinnamon", "Vanilla" } : new[] { "Vanilla", "Cinnamon" }, 0.3f), 3.8f);
+            r.Row(Wall.N, -9.2f, 9.2f, 6, Spices);
+            ShelfSettings Eggs(int i) => Make(r, $"Egg Rack {i}", "Egg rack", ShelfStyle.OpenRack, 6, 14, 3,
+                new Vector3(0.07f, 0.09f, 0.07f), new[] { "up_egg" }, new[] { "Fresh eggs" }, 0.3f);
+            r.Island(-4f, 1f, Eggs(1), Eggs(2));
+            r.Island(4f, 1f, Eggs(3), Eggs(4));
+            HerbRack(r, 0f, 9.4f);
+            Sacks(r, -8.6f, -8.6f);
+            Barrel(r, 8.6f, -8.6f);
+            Rug(r, 0f, -5f, new Vector2(8f, 3f), new Color(0.6f, 0.4f, 0.2f));
+        }
+
+        /// <summary>Cake tins, baking trays and mixing bowls on racks: the bakery's own store.</summary>
+        private static void BuildBakeware(Room r)
+        {
+            r.Row(Wall.N, -9.2f, 9.2f, 7, i => Make(r, $"Tin Rack {i + 1}", "Tin rack", ShelfStyle.OpenRack, 8, 8, 2,
+                new Vector3(0.22f, 0.1f, 0.22f), new[] { "up_caketin" }, new[] { "Cake tins" }, 0.2f));
+            r.Row(Wall.E, -9.2f, 8.6f, 5, i => Make(r, $"Tray Rack {i + 1}", "Tray rack", ShelfStyle.OpenRack, 12, 5, 1,
+                new Vector3(0.32f, 0.06f, 0.24f), new[] { "up_tray" }, new[] { "Baking trays" }, 0.2f));
+            ShelfSettings Bowls(int i) => Tall(Make(r, $"Bowl Dresser {i}", "Bowl dresser", ShelfStyle.Bookcase, 5, 8, 2,
+                new Vector3(0.2f, 0.14f, 0.2f), new[] { "up_bowl" }, new[] { "Mixing bowls" }, 0.35f), 3.6f);
+            r.Island(-3f, 1f, Bowls(1), Bowls(2));
+            r.Island(-3f, -4.5f, Bowls(3), Bowls(4));
+            Crates(r, -8.6f, -8.4f);
+            Sacks(r, 7f, -8.8f);
+            Rug(r, -3f, -1.8f, new Vector2(5f, 9f), new Color(0.5f, 0.55f, 0.6f));
+        }
+
         // ───────────── Room decoration (decor only: no slots) ─────────────
 
         private static Material DecorMat(string name, Color color) => GreyboxAssets.Lit("Bakery_Decor_" + name, color);
@@ -593,64 +742,9 @@ namespace TidyUp.Editor
 
         private static void BuildShell(LocationDefinition location, ZoneInfo[] zones, LocationPalette p)
         {
-            Transform building = LocationKit.BuildRoom("Bakery Building", FloorSize, Ceiling, p);
             var decor = new GameObject("Decor").transform;
-
-            // Partition walls with wide doorways, and a sign over each doorway naming the room beyond.
-            BuildPartitions(building, p);
-            foreach (var d in Doorways)
-            {
-                string Name(string id) { foreach (ZoneSpec z in Zones) if (z.Id == id) return z.Name; return id; }
-                Vector3 c = new Vector3(d.at.x, 0f, d.at.y);
-                Vector3 n = d.alongX ? Vector3.forward : Vector3.right; // from the "south" room into the "north" room
-                float y = DoorHeight + 0.55f, off = WallThickness * 0.5f + 0.03f;
-                LocationKit.BuildWallSign(decor, $"Sign {Name(d.north)}", Name(d.north).ToUpperInvariant(), c - n * off + Vector3.up * y,
-                    Quaternion.LookRotation(n), new Vector2(3.2f, 0.5f), p.Wood, new Color(0.98f, 0.92f, 0.78f), new Color(0.35f, 0.18f, 0.08f));
-                LocationKit.BuildWallSign(decor, $"Sign {Name(d.south)}", Name(d.south).ToUpperInvariant(), c + n * off + Vector3.up * y,
-                    Quaternion.LookRotation(-n), new Vector2(3.2f, 0.5f), p.Wood, new Color(0.98f, 0.92f, 0.78f), new Color(0.35f, 0.18f, 0.08f));
-            }
-
-
-            // Dark ceiling beams across the whole floor (the frieze runs along the partitions, see Partition), and paintings
-            // either side of each doorway, above the tall shelves.
-            Material beam = GreyboxAssets.Textured("Bakery_Beam", new Color(0.32f, 0.2f, 0.12f), Art.TextureSet.Wood, 1.2f, 0.3f);
-
-            for (float bx = -27.5f; bx <= 27.6f; bx += 5f)
-                GreyboxAssets.MarkStatic(GreyboxAssets.Box("Ceiling Beam", building, new Vector3(bx, Ceiling - 0.22f, 0f), new Vector3(0.32f, 0.44f, FloorSize.y - 0.2f), beam, keepCollider: false));
-            int seed = 31;
-            foreach (var d in Doorways)
-            {
-                Vector3 c = new Vector3(d.at.x, 0f, d.at.y);
-                Vector3 n = d.alongX ? Vector3.forward : Vector3.right;
-                Vector3 along = d.alongX ? Vector3.right : Vector3.forward;
-                foreach (int face in new[] { -1, 1 })
-                foreach (int side in new[] { -1, 1 })
-                {
-                    Vector3 at = c + n * face * (WallThickness * 0.5f + 0.02f) + along * side * 4.2f + Vector3.up * 4.85f;
-                    var picture = (seed % 3) == 0 ? Art.ArchitectureKit.Picture.Map : Art.ArchitectureKit.Picture.Landscape;
-                    Art.ArchitectureKit.Painting(decor, at, Quaternion.LookRotation(-n * face), new Vector2(1.5f, 0.95f), picture, seed++);
-                }
-            }
-            // Each room gets its own floor inlay, two rows of chandeliers, and windows in the front and back walls.
-            foreach (ZoneSpec z in Zones)
-            {
-                Material inlay = GreyboxAssets.Textured($"Bakery_Inlay_{z.Id}", z.InlayColor, z.Inlay, 1.6f, 0.35f);
-                GreyboxAssets.MarkStatic(GreyboxAssets.Box($"Floor Inlay {z.Name}", building, new Vector3(z.Centre.x, 0.004f, z.Centre.y), new Vector3(17.5f, 0.008f, 17.5f), inlay, keepCollider: false));
-                foreach (float lx in new[] { -5f, 5f })
-                foreach (float lz in new[] { -5f, 5f })
-                    LocationKit.BuildLamp($"Lamp {z.Name} {lx:0}{lz:0}", decor, new Vector3(z.Centre.x + lx, 0f, z.Centre.y + lz), Ceiling, p);
-                foreach (float wx in new[] { -5f, 5f })
-                {
-                    bool frontRow = z.Centre.y < 0f;
-                    var window = new GameObject($"Window {(frontRow ? "S" : "N")} {z.Name} {wx:0}").transform;
-                    window.SetParent(building, false);
-                    window.localPosition = new Vector3(z.Centre.x + wx, p.WindowY, frontRow ? -FloorSize.y * 0.5f + 0.1f : FloorSize.y * 0.5f - 0.1f);
-                    window.localRotation = Quaternion.Euler(0f, frontRow ? 180f : 0f, 0f); // local -Z faces into the building
-                    LocationKit.BuildWindow(window, p.WindowSize, p);
-                    if (p.Mood != null) Art.MoodAssets.AddWindowLight(window, p.WindowSize, p.Mood.WindowLight, p.Mood.WindowLightStrength);
-                }
-            }
-
+            for (int floor = 0; floor < FloorHeights.Length; floor++) BuildStorey(floor, p, decor);
+            BuildLift(p);
             // The Bakehouse ovens: brick, with a glowing mouth, along its outside wall.
             Material brick = GreyboxAssets.Textured("Bakery_OvenBrick", new Color(0.78f, 0.5f, 0.38f), Art.TextureSet.Brick, 1f, 0.1f);
             Material fire = GreyboxAssets.Emissive("Bakery_OvenFire", new Color(1f, 0.55f, 0.2f), new Color(1f, 0.45f, 0.12f), 4f);
@@ -709,7 +803,8 @@ namespace TidyUp.Editor
             var doorways = new List<Vector2>();
             foreach (var d in Doorways) doorways.Add(d.at);
             MegaLocation mega = systems.AddComponent<MegaLocation>();
-            mega.EditorConfigure(location, zones, entry, drop, new Rect(-FloorSize.x * 0.5f, -FloorSize.y * 0.5f, FloorSize.x, FloorSize.y), doorways.ToArray());
+            mega.EditorConfigure(location, zones, entry, drop, new Rect(-FloorSize.x * 0.5f, -FloorSize.y * 0.5f, FloorSize.x, FloorSize.y), doorways.ToArray(),
+                (float[])FloorHeights.Clone(), FloorNames, new[] { LiftShaft });
 
             var stagesRoot = new GameObject("Restoration Stages").transform;
             RestorationStage stage = new GameObject("Stage 100% Bakery Opens").AddComponent<RestorationStage>();
@@ -720,19 +815,251 @@ namespace TidyUp.Editor
             systems.AddComponent<RestorationController>().EditorConfigure(null, null, new[] { stage }, mega);
         }
 
+        // ───────────── Storeys ─────────────
+
+        /// <summary>
+        /// One floor of the building: walls, windows, partitions with signed doorways, beams, paintings, floor inlays and
+        /// chandeliers for its rooms. The ground floor has no roof (the first floor stands on it); the slab between them
+        /// is split in two thin layers (ground ceiling below, first floor above, no coinciding faces) with the lift
+        /// shaft cut out.
+        /// </summary>
+        private static void BuildStorey(int floor, LocationPalette p, Transform decor)
+        {
+            float y = FloorHeights[floor], height = floor == 0 ? Ceiling : UpperCeiling;
+            bool top = floor == FloorHeights.Length - 1;
+            p.WindowY = floor == 0 ? 4.95f : 3.6f;   // windows high up, over the tall shelves
+            p.SkipRoof = !top;
+            Transform building = LocationKit.BuildRoom($"Bakery {FloorNames[floor]}", FloorSize, height, p);
+            building.position = new Vector3(0f, y, 0f);
+            if (!top) ReplaceSlab(building.Find("Ceiling"), y + height, y + height + 0.12f, LiftShaft);         // ground ceiling
+            if (floor > 0) ReplaceSlab(building.Find("Floor"), y - 0.08f, y, LiftShaft);                      // first floor surface
+
+            BuildPartitions(building, p, height);
+            float signY = DoorHeight + 0.55f, off = WallThickness * 0.5f + 0.03f;
+            foreach (var d in Doorways)
+            {
+                Vector3 c = new Vector3(d.at.x, y, d.at.y);
+                Vector3 n = d.alongX ? Vector3.forward : Vector3.right; // from the "south" room into the "north" room
+                string north = NameAt(d.north, floor), south = NameAt(d.south, floor);
+                LocationKit.BuildWallSign(decor, $"Sign {north}", north.ToUpperInvariant(), c - n * off + Vector3.up * signY,
+                    Quaternion.LookRotation(n), new Vector2(3.2f, 0.5f), p.Wood, new Color(0.98f, 0.92f, 0.78f), new Color(0.35f, 0.18f, 0.08f));
+                LocationKit.BuildWallSign(decor, $"Sign {south}", south.ToUpperInvariant(), c + n * off + Vector3.up * signY,
+                    Quaternion.LookRotation(-n), new Vector2(3.2f, 0.5f), p.Wood, new Color(0.98f, 0.92f, 0.78f), new Color(0.35f, 0.18f, 0.08f));
+            }
+
+            // Dark ceiling beams across the floor (the frieze runs along the partitions, see Partition), and paintings
+            // either side of each doorway, above the tall shelves.
+            Material beam = GreyboxAssets.Textured("Bakery_Beam", new Color(0.32f, 0.2f, 0.12f), Art.TextureSet.Wood, 1.2f, 0.3f);
+            for (float bx = -27.5f; bx <= 27.6f; bx += 5f)
+                GreyboxAssets.MarkStatic(GreyboxAssets.Box("Ceiling Beam", building, new Vector3(bx, height - 0.22f, 0f), new Vector3(0.32f, 0.44f, FloorSize.y - 0.2f), beam, keepCollider: false));
+            int seed = 31 + floor * 17;
+            Vector2 paintingSize = floor == 0 ? new Vector2(1.5f, 0.95f) : new Vector2(1.2f, 0.75f);
+            float paintingY = floor == 0 ? 4.85f : 4.05f;
+            foreach (var d in Doorways)
+            {
+                Vector3 c = new Vector3(d.at.x, y, d.at.y);
+                Vector3 n = d.alongX ? Vector3.forward : Vector3.right;
+                Vector3 along = d.alongX ? Vector3.right : Vector3.forward;
+                foreach (int face in new[] { -1, 1 })
+                foreach (int side in new[] { -1, 1 })
+                {
+                    Vector3 at = c + n * face * (WallThickness * 0.5f + 0.02f) + along * side * 4.2f + Vector3.up * paintingY;
+                    var picture = (seed % 3) == 0 ? Art.ArchitectureKit.Picture.Map : Art.ArchitectureKit.Picture.Landscape;
+                    Art.ArchitectureKit.Painting(decor, at, Quaternion.LookRotation(-n * face), paintingSize, picture, seed++);
+                }
+            }
+
+            // Each room on this floor: its own floor inlay, two rows of chandeliers, and windows in the front and back
+            // walls. Chandeliers are built at ground level and the group lifted to the floor.
+            var lamps = new GameObject($"Chandeliers {FloorNames[floor]}").transform;
+            lamps.SetParent(decor, false);
+            foreach (ZoneSpec z in Zones)
+            {
+                if (z.Floor != floor) continue;
+                Material inlay = GreyboxAssets.Textured($"Bakery_Inlay_{z.Id}", z.InlayColor, z.Inlay, 1.6f, 0.35f);
+                GreyboxAssets.MarkStatic(GreyboxAssets.Box($"Floor Inlay {z.Name}", building, new Vector3(z.Centre.x, 0.004f, z.Centre.y), new Vector3(17.5f, 0.008f, 17.5f), inlay, keepCollider: false));
+                foreach (float lx in new[] { -5f, 5f })
+                foreach (float lz in new[] { -5f, 5f })
+                    LocationKit.BuildLamp($"Lamp {z.Name} {lx:0}{lz:0}", lamps, new Vector3(z.Centre.x + lx, 0f, z.Centre.y + lz), height, p);
+                foreach (float wx in new[] { -5f, 5f })
+                {
+                    bool frontRow = z.Centre.y < 0f;
+                    var window = new GameObject($"Window {(frontRow ? "S" : "N")} {z.Name} {wx:0}").transform;
+                    window.SetParent(building, false);
+                    window.localPosition = new Vector3(z.Centre.x + wx, p.WindowY, frontRow ? -FloorSize.y * 0.5f + 0.1f : FloorSize.y * 0.5f - 0.1f);
+                    window.localRotation = Quaternion.Euler(0f, frontRow ? 180f : 0f, 0f); // local -Z faces into the building
+                    LocationKit.BuildWindow(window, p.WindowSize, p);
+                    if (p.Mood != null) Art.MoodAssets.AddWindowLight(window, p.WindowSize, p.Mood.WindowLight, p.Mood.WindowLightStrength);
+                }
+            }
+            lamps.position = new Vector3(0f, y, 0f);
+        }
+
+        /// <summary>The room's name on a floor: the room on that floor over the same spot as the ground floor room id.</summary>
+        private static string NameAt(string groundId, int floor)
+        {
+            Vector2 centre = default;
+            foreach (ZoneSpec z in Zones) if (z.Id == groundId) centre = z.Centre;
+            foreach (ZoneSpec z in Zones) if (z.Floor == floor && z.Centre == centre) return z.Name;
+            return groundId;
+        }
+
+        /// <summary>
+        /// Replaces a floor or ceiling slab with pieces between the given heights, leaving a rectangular hole (world
+        /// XZ) for the lift shaft.
+        /// </summary>
+        private static void ReplaceSlab(Transform slab, float yMin, float yMax, Rect hole)
+        {
+            if (slab == null) return;
+            var renderer = slab.GetComponent<Renderer>();
+            Bounds b = renderer.bounds;
+            Material material = renderer.sharedMaterial;
+            Transform parent = slab.parent;
+            void Piece(string name, float x0, float x1, float z0, float z1)
+            {
+                if (x1 - x0 < 0.01f || z1 - z0 < 0.01f) return;
+                var world = new Vector3((x0 + x1) * 0.5f, (yMin + yMax) * 0.5f, (z0 + z1) * 0.5f);
+                GameObject go = GreyboxAssets.Box(name, parent, parent.InverseTransformPoint(world), new Vector3(x1 - x0, yMax - yMin, z1 - z0), material);
+                go.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                GreyboxAssets.MarkStatic(go);
+            }
+            Piece(slab.name + " S", b.min.x, b.max.x, b.min.z, hole.yMin);
+            Piece(slab.name + " N", b.min.x, b.max.x, hole.yMax, b.max.z);
+            Piece(slab.name + " W", b.min.x, hole.xMin, hole.yMin, hole.yMax);
+            Piece(slab.name + " E", hole.xMax, b.max.x, hole.yMin, hole.yMax);
+            UnityEngine.Object.DestroyImmediate(slab.gameObject);
+        }
+
+        // ───────────── The lift ─────────────
+
+        /// <summary>
+        /// An open cage lift in the Shop Hall's north-west corner, running up through the Tea Room: an iron and brass
+        /// shaft, a car with a lamp and a brass button panel, a gate across the shaft on each floor (open only while
+        /// the car is there) and a "call" button beside each landing.
+        /// </summary>
+        private static Elevator BuildLift(LocationPalette p)
+        {
+            var root = new GameObject("Lift").transform;
+            Material iron = GreyboxAssets.Lit("Bakery_LiftIron", new Color(0.14f, 0.13f, 0.12f));
+            Material brass = Art.ArchitectureKit.Brass();
+            Material glow = GreyboxAssets.Emissive("Bakery_LiftLamp", new Color(1f, 0.9f, 0.7f), new Color(1f, 0.78f, 0.5f), 2.5f);
+            float top = FloorHeights[FloorHeights.Length - 1] + UpperCeiling;
+            Rect s = LiftShaft;
+            var centre = new Vector3(s.center.x, 0f, s.center.y);
+
+            // Shaft: corner posts full height, bars on the west, east and back sides (colliders keep you out), and a
+            // brass band at each floor.
+            foreach (int ix in new[] { -1, 1 })
+            foreach (int iz in new[] { -1, 1 })
+                Box(root, "Shaft Post", centre + new Vector3(ix * s.width * 0.5f, top * 0.5f, iz * s.height * 0.5f), new Vector3(0.12f, top, 0.12f), iron, collider: true);
+            foreach (int side in new[] { -1, 1 })
+            {
+                Box(root, "Shaft Side", centre + new Vector3(side * s.width * 0.5f, top * 0.5f, 0f), new Vector3(0.06f, top, s.height), null, collider: true);
+                for (float t = -s.height * 0.5f + 0.25f; t < s.height * 0.5f; t += 0.25f)
+                    Box(root, "Bar", centre + new Vector3(side * s.width * 0.5f, top * 0.5f, t), new Vector3(0.025f, top, 0.025f), iron, collider: false);
+            }
+            Box(root, "Shaft Back", centre + new Vector3(0f, top * 0.5f, s.height * 0.5f), new Vector3(s.width, top, 0.06f), null, collider: true);
+            for (float t = -s.width * 0.5f + 0.25f; t < s.width * 0.5f; t += 0.25f)
+                Box(root, "Bar", centre + new Vector3(t, top * 0.5f, s.height * 0.5f), new Vector3(0.025f, top, 0.025f), iron, collider: false);
+            foreach (float fy in FloorHeights)
+            {
+                Box(root, "Brass Band", centre + new Vector3(0f, fy + 2.6f, -s.height * 0.5f), new Vector3(s.width + 0.15f, 0.12f, 0.12f), brass, collider: false);
+                LocationKit.BuildWallSign(root, "Lift Sign", "LIFT", centre + new Vector3(0f, fy + 2.95f, -s.height * 0.5f - 0.08f), Quaternion.identity,
+                    new Vector2(0.9f, 0.3f), p.Wood, new Color(0.98f, 0.92f, 0.78f), new Color(0.35f, 0.18f, 0.08f));
+            }
+
+            // The car: a floor plate (its top is the walking surface), corner posts, a roof with a lamp, cage sides.
+            var car = new GameObject("Lift Car").transform;
+            car.SetParent(root, false);
+            car.position = centre;
+            float cw = s.width - 0.25f, cd = s.height - 0.25f;
+            Box(car, "Car Floor", new Vector3(0f, -0.06f, 0f), new Vector3(cw, 0.12f, cd), p.Wood, collider: true, local: true);
+            foreach (int ix in new[] { -1, 1 })
+            foreach (int iz in new[] { -1, 1 })
+                Box(car, "Car Post", new Vector3(ix * cw * 0.5f, 1.2f, iz * cd * 0.5f), new Vector3(0.06f, 2.4f, 0.06f), brass, collider: false, local: true);
+            Box(car, "Car Roof", new Vector3(0f, 2.42f, 0f), new Vector3(cw, 0.06f, cd), iron, collider: false, local: true);
+            Box(car, "Car Rail", new Vector3(0f, 1.0f, cd * 0.5f), new Vector3(cw, 0.05f, 0.05f), brass, collider: false, local: true);
+            foreach (int side in new[] { -1, 1 })
+                Box(car, "Car Rail", new Vector3(side * cw * 0.5f, 1.0f, 0f), new Vector3(0.05f, 0.05f, cd), brass, collider: false, local: true);
+            LocationKit.AddPrimitive(PrimitiveType.Sphere, "Car Lamp", car, new Vector3(0f, 2.32f, 0f), new Vector3(0.22f, 0.12f, 0.22f), glow);
+            var lampGo = new GameObject("Car Light");
+            lampGo.transform.SetParent(car, false);
+            lampGo.transform.localPosition = new Vector3(0f, 2.2f, 0f);
+            Light lamp = lampGo.AddComponent<Light>();
+            lamp.type = LightType.Point;
+            lamp.color = new Color(1f, 0.82f, 0.6f);
+            lamp.intensity = 1.2f;
+            lamp.range = 3.5f;
+            lamp.shadows = LightShadows.None;
+            // The inside button panel on the east side.
+            Transform panel = Button(car, "Car Buttons", new Vector3(cw * 0.5f - 0.05f, 1.25f, -0.4f), Quaternion.Euler(0f, -90f, 0f), brass, iron);
+
+            // Gates (one per floor) and call buttons beside each landing.
+            var gates = new List<GameObject>();
+            var buttons = new List<Transform> { panel };
+            for (int f = 0; f < FloorHeights.Length; f++)
+            {
+                float fy = FloorHeights[f];
+                var gate = new GameObject($"Gate {FloorNames[f]}");
+                gate.transform.SetParent(root, false);
+                gate.transform.position = centre + new Vector3(0f, fy, -s.height * 0.5f);
+                for (float t = -s.width * 0.5f + 0.15f; t < s.width * 0.5f; t += 0.18f)
+                    Box(gate.transform, "Gate Bar", new Vector3(t, 1.15f, 0f), new Vector3(0.025f, 2.3f, 0.025f), iron, collider: false, local: true);
+                foreach (float gy in new[] { 0.1f, 1.15f, 2.25f })
+                    Box(gate.transform, "Gate Rail", new Vector3(0f, gy, 0f), new Vector3(s.width, 0.05f, 0.04f), brass, collider: false, local: true);
+                BoxCollider block = gate.AddComponent<BoxCollider>();
+                block.center = new Vector3(0f, 1.2f, 0f);
+                block.size = new Vector3(s.width, 2.4f, 0.12f);
+                gates.Add(gate);
+                buttons.Add(Button(root, $"Call Button {FloorNames[f]}", centre + new Vector3(s.width * 0.5f + 0.35f, fy + 1.25f, -s.height * 0.5f - 0.02f),
+                    Quaternion.identity, brass, iron));
+            }
+
+            Elevator lift = root.gameObject.AddComponent<Elevator>();
+            lift.EditorConfigure(car, (float[])FloorHeights.Clone(), gates.ToArray(), new Vector2(cw, cd), FloorNames);
+            buttons[0].gameObject.AddComponent<ElevatorButton>().EditorConfigure(lift, -1);
+            for (int f = 0; f < FloorHeights.Length; f++) buttons[f + 1].gameObject.AddComponent<ElevatorButton>().EditorConfigure(lift, f);
+            return lift;
+        }
+
+        /// <summary>A brass plate with a round button and a generous trigger to aim at. Local -Z faces the player.</summary>
+        private static Transform Button(Transform parent, string name, Vector3 position, Quaternion rotation, Material brass, Material iron)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            if (parent.name == "Lift Car") go.transform.localPosition = position; else go.transform.position = position;
+            go.transform.localRotation = rotation;
+            LocationKit.AddPrimitive(PrimitiveType.Cube, "Plate", go.transform, Vector3.zero, new Vector3(0.18f, 0.3f, 0.02f), brass);
+            GameObject knob = LocationKit.AddPrimitive(PrimitiveType.Cylinder, "Button", go.transform, new Vector3(0f, 0.04f, -0.02f), new Vector3(0.07f, 0.015f, 0.07f), iron);
+            knob.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            BoxCollider target = go.AddComponent<BoxCollider>();
+            target.isTrigger = true;
+            target.size = new Vector3(0.4f, 0.5f, 0.3f);
+            return go.transform;
+        }
+
+        /// <summary>A box for the lift: world position (or local with local: true); a null material makes it an invisible blocker.</summary>
+        private static GameObject Box(Transform parent, string name, Vector3 position, Vector3 size, Material material, bool collider, bool local = false)
+        {
+            Vector3 at = local ? position : parent.InverseTransformPoint(position);
+            GameObject go = GreyboxAssets.Box(name, parent, at, size, material != null ? material : GreyboxAssets.Lit("Bakery_LiftIron", Color.black), keepCollider: collider);
+            if (material == null) go.GetComponent<Renderer>().enabled = false;
+            return go;
+        }
+
         /// <summary>Interior walls on the room grid (x = ±10, z = 0), with the doorways cut out and framed.</summary>
-        private static void BuildPartitions(Transform building, LocationPalette p)
+        private static void BuildPartitions(Transform building, LocationPalette p, float height)
         {
             var walls = new GameObject("Partitions").transform;
             walls.SetParent(building, false);
             float hx = FloorSize.x * 0.5f, hz = FloorSize.y * 0.5f;
             // z = 0 from x -30..30 (three doorways); x = ±10 from z -20..20 (two doorways each).
-            Partition(walls, new Vector2(-hx, 0f), new Vector2(hx, 0f), p);
-            Partition(walls, new Vector2(-10f, -hz), new Vector2(-10f, hz), p);
-            Partition(walls, new Vector2(10f, -hz), new Vector2(10f, hz), p);
+            Partition(walls, new Vector2(-hx, 0f), new Vector2(hx, 0f), p, height);
+            Partition(walls, new Vector2(-10f, -hz), new Vector2(-10f, hz), p, height);
+            Partition(walls, new Vector2(10f, -hz), new Vector2(10f, hz), p, height);
         }
 
-        private static void Partition(Transform parent, Vector2 a, Vector2 b, LocationPalette p)
+        private static void Partition(Transform parent, Vector2 a, Vector2 b, LocationPalette p, float height)
         {
             bool alongX = Mathf.Abs(b.x - a.x) > Mathf.Abs(b.y - a.y);
             float start = alongX ? a.x : a.y, end = alongX ? b.x : b.y;
@@ -742,7 +1069,7 @@ namespace TidyUp.Editor
             cuts.Sort();
 
             Vector3 Pos(float t, float y) => alongX ? new Vector3(t, y, a.y) : new Vector3(a.x, y, t);
-            Vector3 Size(float length, float height, float thick) => alongX ? new Vector3(length, height, thick) : new Vector3(thick, height, length);
+            Vector3 Size(float length, float tall, float thick) => alongX ? new Vector3(length, tall, thick) : new Vector3(thick, tall, length);
 
             float cursor = start;
             var spans = new List<(float from, float to)>();
@@ -756,18 +1083,18 @@ namespace TidyUp.Editor
             {
                 float len = s.to - s.from, mid = (s.from + s.to) * 0.5f;
                 if (len <= 0.01f) continue;
-                LocationKit.Furniture("Wall", parent, Pos(mid, Ceiling * 0.5f), Size(len, Ceiling, WallThickness), p.Wall);
+                LocationKit.Furniture("Wall", parent, Pos(mid, height * 0.5f), Size(len, height, WallThickness), p.Wall);
                 // Baseboard and chair rail on both faces.
                 GreyboxAssets.MarkStatic(GreyboxAssets.Box("Baseboard", parent, Pos(mid, 0.07f), Size(len, 0.14f, WallThickness + 0.06f), p.Trim, keepCollider: false));
                 GreyboxAssets.MarkStatic(GreyboxAssets.Box("Chair Rail", parent, Pos(mid, 1.03f), Size(len, 0.06f, WallThickness + 0.09f), p.Trim, keepCollider: false));
             }
             // The painted frieze runs along the partitions too, both faces, over the doorways.
-            GreyboxAssets.MarkStatic(GreyboxAssets.Box("Frieze", parent, Pos((start + end) * 0.5f, 5.55f), Size(end - start, 0.36f, WallThickness + 0.08f),
+            GreyboxAssets.MarkStatic(GreyboxAssets.Box("Frieze", parent, Pos((start + end) * 0.5f, height - 0.3f), Size(end - start, 0.36f, WallThickness + 0.08f),
                 GreyboxAssets.Textured("Bakery_Frieze", new Color(0.22f, 0.42f, 0.42f), Art.TextureSet.Damask, 1.2f, 0.2f), keepCollider: false));
             foreach (float c in cuts)
             {
                 // Lintel over the doorway, and a framed opening: jambs, a moulded head.
-                LocationKit.Furniture("Lintel", parent, Pos(c, (DoorHeight + Ceiling) * 0.5f), Size(DoorWidth, Ceiling - DoorHeight, WallThickness), p.Wall);
+                LocationKit.Furniture("Lintel", parent, Pos(c, (DoorHeight + height) * 0.5f), Size(DoorWidth, height - DoorHeight, WallThickness), p.Wall);
                 foreach (int side in new[] { -1, 1 })
                     LocationKit.Furniture("Jamb", parent, Pos(c + side * (DoorWidth * 0.5f - 0.12f), DoorHeight * 0.5f), Size(0.24f, DoorHeight, WallThickness + 0.12f), p.Wood);
                 LocationKit.Furniture("Door Head", parent, Pos(c, DoorHeight + 0.1f), Size(DoorWidth + 0.3f, 0.2f, WallThickness + 0.16f), p.Wood);

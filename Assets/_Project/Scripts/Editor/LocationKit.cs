@@ -42,6 +42,8 @@ namespace TidyUp.Editor
         public Vector2 WindowSize = new Vector2(1.1f, 1.3f);
         /// <summary>Pilasters and sconces along the side walls (off where fixtures line those walls).</summary>
         public bool WallPilasters = true;
+        /// <summary>Leave the pitched roof off (a lower storey with another one on top).</summary>
+        public bool SkipRoof;
 
         /// <summary>
         /// Art step 2: swaps the plain plaster room for rich surfaces: a patterned wall (damask, brick), a ceiling
@@ -385,6 +387,7 @@ namespace TidyUp.Editor
             p.WallHeight = wallHeight;
             BuildTrimAndWindows(room, size, wallHeight, wall, p);
             if (p.Wainscot != null) BuildWainscot(room, size, wall, p);
+            if (p.SkipRoof) return room; // another storey stands on this one
 
             const float pitch = 30f;
             const float overhang = 0.35f;
@@ -632,7 +635,7 @@ namespace TidyUp.Editor
         /// player walks in. No door, entry or mood: the shell owns those.
         /// </summary>
         public static LocationRig BuildZoneSystems(LocationDefinition location, string zoneId, string zoneName, SlotGroup[] groups,
-            BoxCollider[] scatterAreas, Rect area, LocationPalette palette)
+            BoxCollider[] scatterAreas, Rect area, LocationPalette palette, float floorY = 0f)
         {
             string key = Locations.MegaLocation.ZoneKey(location.Id, zoneId);
             var rig = new LocationRig { Systems = new GameObject($"Zone Systems ({zoneName})") };
@@ -642,7 +645,7 @@ namespace TidyUp.Editor
             muddle.EditorConfigure(location, groups, scatterAreas, key);
             rig.Hints = rig.Systems.AddComponent<HintService>();
             rig.Hints.EditorConfigure(rig.Progress, palette.Ghost);
-            var centre = new Vector3(area.center.x, 0f, area.center.y);
+            var centre = new Vector3(area.center.x, floorY, area.center.y);
             CleaningProgress cleaning = BuildCleaning(rig.Systems, location, groups, area.size, centre, key);
             rig.Runtime = rig.Systems.AddComponent<LocationRuntime>();
             rig.Runtime.EditorConfigure(location, rig.Progress, rig.Hints, muddle, null, null, cleaning, zoneId, zoneName);

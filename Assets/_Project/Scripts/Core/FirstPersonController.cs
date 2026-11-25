@@ -54,6 +54,7 @@ namespace TidyUp.Core
 
         private void UpdateMove(float dt)
         {
+            if (_riding) return; // a lift moves us
             Vector2 move = _input.Move;
             float speed = _input.Sprint ? _sprintSpeed : _walkSpeed;
             Vector3 target = (transform.right * move.x + transform.forward * move.y) * speed;
@@ -90,6 +91,26 @@ namespace TidyUp.Core
             Debug.LogWarning($"[Tidy Up] The player fell out of the world near {transform.position}; putting them back.", this);
             float yaw = transform.eulerAngles.y;
             Teleport(_hasSafePosition ? _lastSafePosition + Vector3.up * 0.2f : Vector3.up, yaw);
+        }
+
+        private bool _riding;
+
+        /// <summary>Something (a lift) carries the player: walking and gravity stop, looking around still works.</summary>
+        public void BeginRide()
+        {
+            if (_controller == null) _controller = GetComponent<CharacterController>();
+            _riding = true;
+            _controller.enabled = false;
+            _horizontalVelocity = Vector3.zero;
+            _verticalVelocity = 0f;
+        }
+
+        public void EndRide()
+        {
+            _riding = false;
+            _controller.enabled = true;
+            _lastSafePosition = transform.position; // the new floor is solid ground
+            _hasSafePosition = true;
         }
         /// <summary>Moves the player instantly (doors, scene changes), facing yaw degrees, looking level.</summary>
         public void Teleport(Vector3 position, float yaw)

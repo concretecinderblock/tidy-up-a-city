@@ -306,3 +306,24 @@ Packages in CLAUDE.md §3 that are **not installed yet** (need Jesse's OK before
   - **Look:** a parchment floor plan in a wooden frame with rounded corners (sprites generated at runtime, no art assets), soft room colours (the room you're in brighter), and an N that circles the rim. Under it: the room you're in, its progress, and "M full map".
   - **Shelves:** every fixture of each loaded room is drawn to scale from its geometry, warm wood when clean and dusty grey while it still needs cleaning (checked twice a second).
   - **Rotation:** the minimap turns so your view always points up, with a fixed arrow in the middle. The full map stays north-up with a turning arrow, and its room names sit on parchment cards above the fixtures.
+
+## 2026-11-25 · The Bakery's first floor and a lift
+- **Why (Jesse):** make the Bakery's second floor, with a lift connecting the two floors.
+- **Floors in mega locations:** `ZoneInfo.Floor`, and `MegaLocation` floor heights and names. The room you're in is chosen by XZ *and* height (`FloorAt`). Streaming counts a room on another floor as 20 m further per floor.
+- **First floor** (walking surface at 6.2 m, 5 m ceilings), six rooms above the ground floor rooms, each with its own new kinds (18 new rows in `bakery.csv`):
+  - Tea Room: tea cups, scones, fruit tarts; tea tables
+  - Celebration Cakes: chocolate, strawberry and birthday cakes; a wedding cake centrepiece
+  - Chocolate Room: bars, truffles, eggs
+  - Biscuit Tins: tins, oat cookies, wafers
+  - Spice Loft: cinnamon and vanilla jars, fresh eggs; hanging herbs
+  - Bakeware Store: cake tins, baking trays, mixing bowls
+  - The upstairs holds 12,340 items; the Bakery now holds **32,305** in total.
+- **Shell:** `BuildStorey` per floor; the ground floor has no roof (`LocationPalette.SkipRoof`). The slab between the floors is two thin layers (ground ceiling 6.2–6.32, first-floor surface 6.12–6.2, no coinciding faces) with the lift shaft cut out (`ReplaceSlab`).
+- **The lift** (`Elevator`, `ElevatorButton`; built by `BuildLift`):
+  - an open iron and brass cage in the Shop Hall's north-west corner, running up through the Tea Room
+  - a button in the car ("Up to the First floor" / "Down to the Ground floor") and a "Call the lift" button at each landing
+  - a gate per floor, closed unless the car is there, so nobody walks into an empty shaft
+  - the car glides about 3.5 s with easing; the rider's walking pauses (`FirstPersonController.BeginRide`/`EndRide`) but they can look around; the new floor is announced
+  - the lift stays out of static batching (its car moves)
+- **Map:** shows the floor you're on (rooms, names, fixtures; the street door only on the ground floor), marks the lift on every floor, and puts the floor name in the caption and the full map's title.
+- **Loading:** everything stays loaded behind the entry fade (`_keepAllLoadedUpTo` raised to 36,000). Entering takes about 17 s in the Editor. Upstairs runs at about 12 ms per frame (9k draws) in the Editor.

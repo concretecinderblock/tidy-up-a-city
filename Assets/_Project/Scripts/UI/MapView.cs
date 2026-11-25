@@ -43,6 +43,8 @@ namespace TidyUp.UI
             public RectTransform Player;
             public float Scale;
             public int[] ShownPlaced;
+            public Image[] Cards;          // the full map's name cards, per room
+            public Image StreetDoor;       // ground floor only
         }
 
         private sealed class Fixture
@@ -50,6 +52,7 @@ namespace TidyUp.UI
             public Cleanable Cleanable;
             public Image Mini, Full;
             public bool ShownClean;
+            public int Floor;
         }
 
         private MegaLocation _mega;
@@ -61,6 +64,7 @@ namespace TidyUp.UI
         private int _shownActive = -2;
         private int _shownTotal = -1;
         private int _shownActivePlaced = -1;
+        private int _shownFloor = -1;
         private bool[] _fixturesDrawn = System.Array.Empty<bool>();
         private readonly List<Fixture> _fixtures = new List<Fixture>();
         private float _nextFixtureCheck;
@@ -89,6 +93,7 @@ namespace TidyUp.UI
             _shownActive = -2;
             _shownTotal = -1;
             _shownActivePlaced = -1;
+            _shownFloor = -1;
             if (_mega == null || _mega.Zones.Count == 0) return;
             if (_font == null) _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             _fixturesDrawn = new bool[_mega.Zones.Count];
@@ -173,9 +178,33 @@ namespace TidyUp.UI
                 DrawNewlyLoadedFixtures();
                 RefreshFixtureTints();
             }
+            if (player != null) ShowFloor(_mega.FloorAt(player.position.y));
             RefreshTexts(force: false);
         }
 
+
+        /// <summary>Shows only the rooms, names and fixtures of the floor the player is on (rooms overlap across floors).</summary>
+        private void ShowFloor(int floor)
+        {
+            if (floor == _shownFloor) return;
+            _shownFloor = floor;
+            for (int i = 0; i < _mega.Zones.Count; i++)
+            {
+                bool here = _mega.Zones[i].Floor == floor;
+                _mini.Rooms[i].gameObject.SetActive(here);
+                _full.Rooms[i].gameObject.SetActive(here);
+                if (_full.Cards[i] != null) _full.Cards[i].gameObject.SetActive(here);
+            }
+            foreach (Fixture f in _fixtures)
+            {
+                bool here = f.Floor == floor;
+                f.Mini.gameObject.SetActive(here);
+                f.Full.gameObject.SetActive(here);
+            }
+            if (_mini.StreetDoor != null) _mini.StreetDoor.gameObject.SetActive(floor == 0);
+            if (_full.StreetDoor != null) _full.StreetDoor.gameObject.SetActive(floor == 0);
+            RefreshTexts(force: true);
+        }
         // ───────────── Fixtures ─────────────
 
         /// <summary>Draws the fixtures of rooms that have loaded since the last check (once per room).</summary>
@@ -190,7 +219,7 @@ namespace TidyUp.UI
                 foreach (SlotGroup group in room.Progress.Groups)
                 {
                     if (group == null || !TryFootprint(group, out Rect footprint)) continue;
-                    var fixture = new Fixture { Cleanable = group.GetComponent<Cleanable>() };
+                    var fixture = new Fixture { Cleanable = group.GetComponent<Cleanable>(), Floor = _mega.Zones[z].Floor };
                     fixture.ShownClean = fixture.Cleanable == null || fixture.Cleanable.IsClean;
                     Color c = fixture.ShownClean ? FixtureClean : FixtureDirty;
                     fixture.Mini = Box(_mini.Content, "Fixture", footprint.center * _mini.Scale, Vector2.Max(footprint.size * _mini.Scale, new Vector2(2f, 2f)), c);
@@ -198,6 +227,9 @@ namespace TidyUp.UI
                     if (_full.LabelLayer != null) _full.LabelLayer.SetAsLastSibling(); // names above the fixtures
                     if (_full.Player != null) _full.Player.SetAsLastSibling();         // and the arrow on top of all
                     _fixtures.Add(fixture);
+                    bool here = fixture.Floor == _shownFloor;
+                    fixture.Mini.gameObject.SetActive(here);
+                    fixture.Full.gameObject.SetActive(here);
                 }
             }
         }
@@ -242,7 +274,8 @@ namespace TidyUp.UI
             _shownActive = active;
             _shownTotal = total;
             _shownActivePlaced = activePlaced;
-            _fullTitle.text = $"<b>{(_mega.Location != null ? _mega.Location.DisplayName : "Building")}</b>   {total:N0} / {_mega.Total:N0}";
+            string floorName = _mega.FloorCount > 1 ? "  ·  " + _mega.FloorName(Mathf.Max(0, _shownFloor)) : string.Empty;
+            _fullTitle.text = $"<b>{(_mega.Location != null ? _mega.Location.DisplayName : "Building")}</b>{floorName}   {total:N0} / {_mega.Total:N0}";
             for (int i = 0; i < _mega.Zones.Count; i++)
             {
                 ZoneInfo zone = _mega.Zones[i];
@@ -262,7 +295,8 @@ namespace TidyUp.UI
             {
                 ZoneInfo zone = _mega.Zones[active];
                 bool complete = zone.TotalSlots > 0 && activePlaced >= zone.TotalSlots;
-                _caption.text = $"<b>{zone.DisplayName}</b>  {(complete ? "✓" : $"{activePlaced:N0} / {zone.TotalSlots:N0}")}\n<size=15><color=#FFFFFFB0>M  full map</color></size>";
+                string where = _mega.FloorCount > 1 ? _mega.FloorName(zone.Floor) + "  ·  " : string.Empty;
+                _caption.text = $"<b>{zone.DisplayName}</b>  {(complete ? "✓" : $"{activePlaced:N0} / {zone.TotalSlots:N0}")}\n<size=15><color=#FFFFFFB0>{where}M  full map</color></size>";
             }
             else _caption.text = "<size=15><color=#FFFFFFB0>M  full map</color></size>";
         }
@@ -278,6 +312,7 @@ namespace TidyUp.UI
             plan.Rooms = new Image[n];
             plan.Labels = new Text[n];
             plan.ShownPlaced = new int[n];
+            plan.Cards = new Image[n];
             for (int i = 0; i < n; i++)
             {
                 Rect a = _mega.Zones[i].Area;
@@ -287,6 +322,7 @@ namespace TidyUp.UI
                 if (plan.LabelLayer == null) plan.LabelLayer = Rect("Labels", plan.Content, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
                 // A soft parchment card behind each name, on a layer above the fixtures.
                 Image card = Box(plan.LabelLayer, "Card", a.center * scale, new Vector2(Mathf.Min(a.width * scale - 12f, 230f), 58f), new Color(Paper.r, Paper.g, Paper.b, 0.8f));
+                plan.Cards[i] = card;
                 card.sprite = Rounded(10);
                 card.type = Image.Type.Sliced;
                 Text label = Label(card.rectTransform, "Label", string.Empty, 22, TextAnchor.MiddleCenter, Ink);
@@ -302,11 +338,17 @@ namespace TidyUp.UI
                 Vector2 size = onWallAlongX ? new Vector2(3.6f, 1.2f) : new Vector2(1.2f, 3.6f);
                 Box(plan.Content, "Doorway", d * scale, size * scale, Paper);
             }
+            // Lifts: a brass square with a dark centre, the same on every floor.
+            foreach (Rect lift in _mega.Lifts)
+            {
+                Box(plan.Content, "Lift", lift.center * scale, lift.size * scale, new Color(0.78f, 0.6f, 0.3f));
+                Box(plan.Content, "Lift Shaft", lift.center * scale, lift.size * scale * 0.6f, Ink);
+            }
             // The street door.
             if (_mega.EntryPoint != null)
             {
                 var e = new Vector2(_mega.EntryPoint.position.x, f.yMin);
-                Box(plan.Content, "Street Door", e * scale, new Vector2(2.4f, 1.4f) * scale, Done);
+                plan.StreetDoor = Box(plan.Content, "Street Door", e * scale, new Vector2(2.4f, 1.4f) * scale, Done);
             }
             if (playerMarker)
             {
